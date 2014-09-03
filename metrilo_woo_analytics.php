@@ -70,6 +70,10 @@ class Metrilo_Woo_Analytics {
 				$this->put_event_in_queue('track', 'view_category', $this->prepare_category_hash(get_queried_object()));
 				$this->single_item_tracked = true;
 			}
+			if(is_cart()){
+				$this->put_event_in_queue('track', 'view_cart', array());
+				$this->single_item_tracked = true;
+			}
 		}
 
 		// check if there are events in the queue to be sent to Metrilo
