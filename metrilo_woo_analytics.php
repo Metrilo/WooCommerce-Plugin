@@ -140,28 +140,29 @@ class Metrilo_Woo_Analytics {
 				$this->put_event_in_queue('track', 'checkout_start', array());
 				$this->single_item_tracked = true;
 			}
-
-			// if visitor is viewing homepage or any text page
-
-			if(!$this->single_item_tracked && is_front_page()){
-				$this->put_event_in_queue('track', 'pageview', 'Homepage');
-			}elseif(!$this->single_item_tracked && is_page()){
-				$this->put_event_in_queue('track', 'pageview', get_the_title());
-			}
-
-			// if visitor is viewing post
-
-			if(!$this->single_item_tracked && is_single()){
-				$this->put_event_in_queue('track', 'view_article', array('id' => get_the_id(), 'name' => get_the_title(), 'url' => get_the_permalink()));
-			}
-
-			// if nothing else is tracked - send pageview event
-
-			if(!$this->single_item_tracked){
-				$this->put_event_in_queue('pageview');
-			}
-			
 		}
+
+		// ** GENERIC WordPress tracking - doesn't require WooCommerce in order to work **//
+		// if visitor is viewing homepage or any text page
+
+		if(!$this->single_item_tracked && is_front_page()){
+			$this->put_event_in_queue('track', 'pageview', 'Homepage');
+		}elseif(!$this->single_item_tracked && is_page()){
+			$this->put_event_in_queue('track', 'pageview', get_the_title());
+		}
+
+		// if visitor is viewing post
+
+		if(!$this->single_item_tracked && is_single()){
+			$this->put_event_in_queue('track', 'view_article', array('id' => get_the_id(), 'name' => get_the_title(), 'url' => get_the_permalink()));
+		}
+
+		// if nothing else is tracked - send pageview event
+
+		if(!$this->single_item_tracked){
+			$this->put_event_in_queue('pageview');
+		}
+			
 
 		// check if there are events in the queue to be sent to Metrilo
 		if(count($this->events_queue) > 0) $this->render_events();
