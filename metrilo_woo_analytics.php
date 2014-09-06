@@ -147,14 +147,17 @@ class Metrilo_Woo_Analytics {
 
 		if(!$this->single_item_tracked && is_front_page()){
 			$this->put_event_in_queue('track', 'pageview', 'Homepage');
+			$this->single_item_tracked = true;
 		}elseif(!$this->single_item_tracked && is_page()){
 			$this->put_event_in_queue('track', 'pageview', get_the_title());
+			$this->single_item_tracked = true;
 		}
 
 		// if visitor is viewing post
 
 		if(!$this->single_item_tracked && is_single()){
 			$this->put_event_in_queue('track', 'view_article', array('id' => get_the_id(), 'name' => get_the_title(), 'url' => get_the_permalink()));
+			$this->single_item_tracked = true;
 		}
 
 		// if nothing else is tracked - send pageview event
