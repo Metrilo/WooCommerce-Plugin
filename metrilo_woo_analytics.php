@@ -16,6 +16,8 @@ class Metrilo_Woo_Analytics {
 	private $default_options = array('api_token' => '');
 	private $events_queue = array();
 	private $single_item_tracked = false;
+	private $has_events_in_cookie = false;
+	private $identify_call_data = false;
 
 	// make sure there's Metrilo instance
 	public static function ensure_instance(){
@@ -24,9 +26,15 @@ class Metrilo_Woo_Analytics {
 			self::$instance = new Metrilo_Woo_Analytics;
 			self::$instance->ensure_path();
 			self::$instance->ensure_hooks();
+			self::$instance->process_cookie_events();
 		}
 		return self::$instance;
 
+	}
+
+	public static function clear_cookie_events(){
+		self::ensure_instance()->clear_items_in_cookie();
+		wp_send_json_success();
 	}
 
 	public function get_options_pool(){
@@ -57,27 +65,88 @@ class Metrilo_Woo_Analytics {
 		// this is where we're going to place the tracking code if we need to send something
 	} 
 
+	public function process_cookie_events(){
+		$items = $this->get_items_in_cookie();
+		if(count($items) > 0){
+			$this->has_events_in_cookie = true;
+			foreach($items as $event){
+				$this->put_event_in_queue($event['method'], $event['event'], $event['params']);
+			}
+		}
+	}
+
 	public function woocommerce_tracking(){
 		// check if woocommerce is installed
 		if(class_exists('WooCommerce')){
-			// check certain tracking scenarios
-			if(is_product()){
+			/** check certain tracking scenarios **/
+
+			// if visitor is viewing product
+			if(!$this->single_item_tracked && is_product()){
 				$product = get_product(get_queried_object_id());
 				$this->put_event_in_queue('track', 'view_product', $this->prepare_product_hash($product));
 				$this->single_item_tracked = true;
 			}
-			if(is_product_category()){
+
+			// if visitor is viewing product category
+			if(!$this->single_item_tracked && is_product_category()){
 				$this->put_event_in_queue('track', 'view_category', $this->prepare_category_hash(get_queried_object()));
 				$this->single_item_tracked = true;
 			}
-			if(is_cart()){
+
+			// if visitor is viewing shopping cart page
+			if(!$this->single_item_tracked && is_cart()){
 				$this->put_event_in_queue('track', 'view_cart', array());
 				$this->single_item_tracked = true;
 			}
+			// if visitor is anywhere in the checkout process
+			if(!$this->single_item_tracked && is_order_received_page()){
+				$order_id = get_query_var('order-received');
+				$order = new WC_Order($order_id);
+				// also - prepare to identify user
+				$this->identify_call_data = array(
+					'id'		=> get_post_meta($order_id, '_billing_email', true),
+					'params'	=> array(
+								'email' 		=> get_post_meta($order_id, '_billing_email', true),
+								'first_name' 	=> get_post_meta($order_id, '_billing_first_name', true),
+								'last_name' 	=> get_post_meta($order_id, '_billing_last_name', true),
+								'name'			=> get_post_meta($order_id, '_billing_first_name', true) . ' ' . get_post_meta($order_id, '_billing_last_name', true),
+							)
+				);
+				$order_items = $order->get_items();
+				$purchase_params = array('order_id' => $order_id, 'amount' => $order->get_total(), 'items' => array());
+				foreach($order_items as $product){
+					array_push($purchase_params['items'], array('id' => $product['product_id'], 'quantity' => $product['qty'], 'name' => $product['name']));
+				}
+				$this->put_event_in_queue('track', 'order', array('order_id' => $order_id));
+				$this->put_event_in_queue('purchase', '', $purchase_params);
+				$this->single_item_tracked = true;
+			}elseif(!$this->single_item_tracked && is_checkout_pay_page()){
+				$this->put_event_in_queue('track', 'checkout_payment', array());
+				$this->single_item_tracked = true;
+			}elseif(!$this->single_item_tracked && is_checkout()){
+				$this->put_event_in_queue('track', 'checkout_start', array());
+				$this->single_item_tracked = true;
+			}
+
+			// if visitor is viewing homepage or any text page
+
+			if(!$this->single_item_tracked && is_front_page()){
+				$this->put_event_in_queue('track', 'pageview', 'Homepage');
+			}elseif(!$this->single_item_tracked && is_page()){
+				$this->put_event_in_queue('track', 'pageview', get_the_title());
+			}
+
+			// if visitor is viewing post
+
+			if(!$this->single_item_tracked && is_single()){
+				$this->put_event_in_queue('track', 'view_article', array('id' => get_the_id(), 'name' => get_the_title(), 'url' => get_the_permalink()));
+			}
+			
 		}
 
 		// check if there are events in the queue to be sent to Metrilo
 		if(count($this->events_queue) > 0) $this->render_events();
+		if($this->identify_call_data !== false) $this->render_identify();
 	}
 
 	public function prepare_product_hash($product){
@@ -118,10 +187,14 @@ class Metrilo_Woo_Analytics {
 		include_once(METRILO_PLUGIN_PATH.'/includes/render_tracking_events.php');
 	}
 
+	public function render_identify(){
+		include_once(METRILO_PLUGIN_PATH.'/includes/render_identify.php');
+	}
+
+
 	public function add_to_cart($cart_item_key, $product_id, $quantity, $variation_id, $variation){
-		return true; // temporary return true because it's FUCKING BUGGY
 		$product = get_product($product_id);
-		$this->put_event_in_cookie_queue('track', 'view_product', $this->prepare_product_hash($product));
+		$this->put_event_in_cookie_queue('track', 'add_to_cart', $this->prepare_product_hash($product));
 		$items = $this->get_items_in_cookie();
 	}
 
@@ -185,16 +258,21 @@ class Metrilo_Woo_Analytics {
 		$items = $this->get_items_in_cookie();
 		if(empty($items)) $items = array();
 		array_push($items, $data);
-		$encoded_items = json_encode($items);
-		@setcookie($this->get_cookie_name(), json_encode($encoded_items), time() + 43200, COOKIEPATH, COOKIE_DOMAIN);
+		$encoded_items = json_encode($items, true);
+		@setcookie($this->get_cookie_name(), $encoded_items, time() + 43200, COOKIEPATH, COOKIE_DOMAIN);
 		$_COOKIE[$this->get_cookie_name()] = $encoded_items;
 	}
 
 	public function get_items_in_cookie(){
 		$items = array();
 		$data = $_COOKIE[$this->get_cookie_name()];
-		if($data) $items = json_decode(stripslashes($data), true);
+		if(!empty($data)) $items = json_decode(stripslashes($data), true);
 		return $items;
+	}
+
+	public function clear_items_in_cookie(){
+		@setcookie($this->get_cookie_name(), json_decode(array(), true), time() + 43200, COOKIEPATH, COOKIE_DOMAIN);
+		$_COOKIE[$this->get_cookie_name()] = json_decode(array(), true);
 	}
 
 	private function get_cookie_name(){
@@ -203,7 +281,15 @@ class Metrilo_Woo_Analytics {
 
 }
 
+// update settings in db when plugin is activated
 register_activation_hook(__FILE__, array('Metrilo_Woo_Analytics', 'ensure_settings' ));
-add_action( 'plugins_loaded', 'Metrilo_Woo_Analytics::ensure_instance');
+
+// ensure plugins instance
+add_action('plugins_loaded', 'Metrilo_Woo_Analytics::ensure_instance');
+
+// define actions for clearing cookies
+
+add_action('wp_ajax_metrilo_clear', 'Metrilo_Woo_Analytics::clear_cookie_events');
+add_action('wp_ajax_nopriv_metrilo_clear', 'Metrilo_Woo_Analytics::clear_cookie_events');
 
 ?>
