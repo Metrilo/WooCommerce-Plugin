@@ -156,7 +156,8 @@ class Metrilo_Woo_Analytics {
 		// if visitor is viewing post
 
 		if(!$this->single_item_tracked && is_single()){
-			$this->put_event_in_queue('track', 'view_article', array('id' => get_the_id(), 'name' => get_the_title(), 'url' => get_the_permalink()));
+			$post_id = get_the_id();
+			$this->put_event_in_queue('track', 'view_article', array('id' => $post_id, 'name' => get_the_title(), 'url' => get_permalink($post_id)));
 			$this->single_item_tracked = true;
 		}
 
