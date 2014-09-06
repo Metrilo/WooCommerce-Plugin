@@ -27,6 +27,7 @@ class Metrilo_Woo_Analytics {
 			self::$instance->ensure_path();
 			self::$instance->ensure_hooks();
 			self::$instance->process_cookie_events();
+			self::$instance->ensure_identify();
 		}
 		return self::$instance;
 
@@ -35,6 +36,18 @@ class Metrilo_Woo_Analytics {
 	public static function clear_cookie_events(){
 		self::ensure_instance()->clear_items_in_cookie();
 		wp_send_json_success();
+	}
+
+	public function ensure_identify(){
+		if(!is_admin() && is_user_logged_in() && !($_COOKIE[$this->get_identify_cookie_name()])){
+			$user = wp_get_current_user();
+			$this->identify_call_data = array('id' => $user->user_email, 'params' => array('email' => $user->user_email, 'name' => $user->display_name));
+			if($user->user_firstname!= '' && $user->user_lastname){
+				$this->identify_call_data['params']['first_name'] = $user->user_firstname;
+				$this->identify_call_data['params']['last_name'] = $user->user_lastname;
+			}
+			@setcookie($this->get_identify_cookie_name(), 'true', time() + 720, COOKIEPATH, COOKIE_DOMAIN);
+		}
 	}
 
 	public function get_options_pool(){
@@ -210,8 +223,12 @@ class Metrilo_Woo_Analytics {
 
 		// add admin menu option
 		add_action('admin_menu', array(self::$instance, 'ensure_admin_menu'));
+
 		// register metrilo plugin settings
 		add_action('admin_init', array(self::$instance, 'ensure_admin_settings'));
+
+		// add settings in plugins row
+		add_filter('plugin_action_links_'.plugin_basename( __FILE__ ), array(self::$instance, 'plugin_action_links'), 10, 2);
 
 	}
 
@@ -235,12 +252,21 @@ class Metrilo_Woo_Analytics {
 		add_settings_field('api_token', 'API Token', array(self::$instance, 'api_token_callback' ), 'metrilo', 'metrilo_general');
 	}
 
+	public function plugin_action_links($links){
+		return array_merge(
+			array(
+				'settings' => '<a href="options-general.php?page=metrilo">Settings</a>'
+			),
+			$links
+		);		
+	}
+
 	public function api_token_callback(){
 		$settings = Metrilo_Woo_Analytics::ensure_instance()->get_settings();
 		$name     = Metrilo_Woo_Analytics::ensure_instance()->options_pool . '[api_token]';
 	?>
 			<input class="regular-text ltr" type="text" name="<?php echo esc_attr( $name ); ?>" id="api_token" value="<?php echo esc_attr( $settings['api_token'] ); ?>" />
-			<p class="description">Do not know your API token? Go to "Settings" in your Metrilo account and it's going to be waiting for you there.</p>
+			<p class="description">Don't know your API token? No worries! Simply go to "Settings" in your <a href="https://www.metrilo.com/projects" targat="_blank">Metrilo account</a> and copy it.</p>
 		<?php
 	}
 
@@ -277,6 +303,10 @@ class Metrilo_Woo_Analytics {
 
 	private function get_cookie_name(){
 		return 'metriloqueue_' . COOKIEHASH;
+	}
+
+	private function get_identify_cookie_name(){
+		return 'metriloid_' . COOKIEHASH;
 	}
 
 }
