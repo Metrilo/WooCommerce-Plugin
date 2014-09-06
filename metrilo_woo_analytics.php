@@ -154,6 +154,12 @@ class Metrilo_Woo_Analytics {
 			if(!$this->single_item_tracked && is_single()){
 				$this->put_event_in_queue('track', 'view_article', array('id' => get_the_id(), 'name' => get_the_title(), 'url' => get_the_permalink()));
 			}
+
+			// if nothing else is tracked - send pageview event
+
+			if(!$this->single_item_tracked){
+				$this->put_event_in_queue('pageview');
+			}
 			
 		}
 
@@ -184,7 +190,7 @@ class Metrilo_Woo_Analytics {
 		return $category_hash;
 	}
 
-	public function put_event_in_queue($method, $event, $params){
+	public function put_event_in_queue($method, $event = '', $params = array()){
 		array_push($this->events_queue, $this->prepare_event_for_queue($method, $event, $params));
 	}
 

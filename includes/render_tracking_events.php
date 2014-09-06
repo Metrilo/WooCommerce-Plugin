@@ -6,6 +6,9 @@
 	<?php if($event['method'] == 'purchase'): ?>
 	metrilo.purchase(<?= json_encode($event['params']); ?>);
 	<?php endif; ?>
+	<?php if($event['method'] == 'pageview'): ?>
+	metrilo.pageview();
+	<?php endif; ?>
 <?php endforeach; ?>
 </script>
 <?php if ($this->has_events_in_cookie): ?>
