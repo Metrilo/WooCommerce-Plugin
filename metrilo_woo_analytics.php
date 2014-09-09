@@ -9,6 +9,9 @@
  * License: GPL2
  */
 
+ini_set('error_reporting', E_ALL);
+ini_set('display_errors', 1);
+
 class Metrilo_Woo_Analytics {
 
 	private static $instance;
@@ -39,7 +42,7 @@ class Metrilo_Woo_Analytics {
 	}
 
 	public function ensure_identify(){
-		if(!is_admin() && is_user_logged_in() && !($_COOKIE[$this->get_identify_cookie_name()])){
+		if(!is_admin() && is_user_logged_in() && !(isset($_COOKIE[$this->get_identify_cookie_name()]))){
 			$user = wp_get_current_user();
 			$this->identify_call_data = array('id' => $user->user_email, 'params' => array('email' => $user->user_email, 'name' => $user->display_name));
 			if($user->user_firstname!= '' && $user->user_lastname){
@@ -173,13 +176,19 @@ class Metrilo_Woo_Analytics {
 		if($this->identify_call_data !== false) $this->render_identify();
 	}
 
-	public function prepare_product_hash($product){
+	public function prepare_product_hash($product, $variation_id = false, $variation = false){
 		$product_hash = array(
 			'id'			=> $product->id, 
 			'name'			=> $product->get_title(),
 			'price'			=> $product->get_price(),
 			'url'			=> $product->get_permalink()
 		);
+		if($variation_id){
+			$variation_data = $this->prepare_variation_data($variation_id, $variation);
+			$product_hash['option_id'] = $variation_data['id'];
+			$product_hash['option_name'] = $variation_data['name'];
+			$product_hash['option_price'] = $variation_data['price'];
+		}
 		// fetch image URL
 		$image_id = get_post_thumbnail_id($product->id);
 		$image = get_post($image_id);
@@ -216,10 +225,29 @@ class Metrilo_Woo_Analytics {
 	}
 
 
-	public function add_to_cart($cart_item_key, $product_id, $quantity, $variation_id, $variation){
+	public function add_to_cart($cart_item_key, $product_id, $quantity, $variation_id = false, $variation = false, $cart_item_data = false){
 		$product = get_product($product_id);
-		$this->put_event_in_cookie_queue('track', 'add_to_cart', $this->prepare_product_hash($product));
+		$this->put_event_in_cookie_queue('track', 'add_to_cart', $this->prepare_product_hash($product, $variation_id, $variation));
 		$items = $this->get_items_in_cookie();
+	}
+
+	public function prepare_variation_data($variation_id, $variation){
+		// prepare variation data array
+		$variation_data = array('id' => $variation_id, 'name' => '', 'price' => '');
+
+		// prepare variation name
+		$variation_attribute_count = 0;
+		foreach($variation as $attr => $value){
+			$variation_data['name'] = $variation_data['name'] . ($variation_attribute_count == 0 ? '' : ', ') . $value;
+			$variation_attribute_count++;
+		}
+
+		// get variation price from object
+		$variation_obj = new WC_Product_Variation($variation_id);
+		$variation_data['price'] = $variation_obj->price;
+
+		// return
+		return $variation_data;
 	}
 
 	// hooks
@@ -230,7 +258,7 @@ class Metrilo_Woo_Analytics {
 		add_filter('wp_head', array(self::$instance, 'woocommerce_tracking'));
 
 		// background events tracking
-		add_action('woocommerce_add_to_cart', array($this, 'add_to_cart'), 10, 3);
+		add_action('woocommerce_add_to_cart', array($this, 'add_to_cart'), 10, 6);
 
 		// add admin menu option
 		add_action('admin_menu', array(self::$instance, 'ensure_admin_menu'));
@@ -302,7 +330,7 @@ class Metrilo_Woo_Analytics {
 
 	public function get_items_in_cookie(){
 		$items = array();
-		$data = $_COOKIE[$this->get_cookie_name()];
+		$data = isset($_COOKIE[$this->get_cookie_name()]) ? $_COOKIE[$this->get_cookie_name()] : false;
 		if(!empty($data)) $items = json_decode(stripslashes($data), true);
 		return $items;
 	}
