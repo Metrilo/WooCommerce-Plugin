@@ -131,7 +131,13 @@ class Metrilo_Woo_Analytics {
 				$order_items = $order->get_items();
 				$purchase_params = array('order_id' => $order_id, 'amount' => $order->get_total(), 'items' => array());
 				foreach($order_items as $product){
-					array_push($purchase_params['items'], array('id' => $product['product_id'], 'quantity' => $product['qty'], 'name' => $product['name']));
+					$product_hash = array('id' => $product['product_id'], 'quantity' => $product['qty'], 'name' => $product['name']);
+					if(!empty($product['variation_id'])){
+						$variation_data = $this->prepare_variation_data($product['variation_id']);
+						$product_hash['option_id'] = $variation_data['id'];
+						$product_hash['option_price'] = $variation_data['price'];
+					}
+					array_push($purchase_params['items'], $product_hash);
 				}
 				$this->put_event_in_queue('track', 'order', array('order_id' => $order_id));
 				$this->put_event_in_queue('purchase', '', $purchase_params);
@@ -146,8 +152,8 @@ class Metrilo_Woo_Analytics {
 		}
 
 		// ** GENERIC WordPress tracking - doesn't require WooCommerce in order to work **//
-		// if visitor is viewing homepage or any text page
 
+		// if visitor is viewing homepage or any text page
 		if(!$this->single_item_tracked && is_front_page()){
 			$this->put_event_in_queue('track', 'pageview', 'Homepage');
 			$this->single_item_tracked = true;
@@ -157,7 +163,6 @@ class Metrilo_Woo_Analytics {
 		}
 
 		// if visitor is viewing post
-
 		if(!$this->single_item_tracked && is_single()){
 			$post_id = get_the_id();
 			$this->put_event_in_queue('track', 'view_article', array('id' => $post_id, 'name' => get_the_title(), 'url' => get_permalink($post_id)));
@@ -165,7 +170,6 @@ class Metrilo_Woo_Analytics {
 		}
 
 		// if nothing else is tracked - send pageview event
-
 		if(!$this->single_item_tracked){
 			$this->put_event_in_queue('pageview');
 		}
@@ -193,6 +197,8 @@ class Metrilo_Woo_Analytics {
 		$image_id = get_post_thumbnail_id($product->id);
 		$image = get_post($image_id);
 		if($image && $image->guid) $product_hash['image_url'] = $image->guid;
+
+		// return 
 		return $product_hash;
 	}
 
@@ -231,15 +237,32 @@ class Metrilo_Woo_Analytics {
 		$items = $this->get_items_in_cookie();
 	}
 
-	public function prepare_variation_data($variation_id, $variation){
+	public function remove_from_cart($key_id){
+		if (!is_object(WC()->cart)) {
+			return true;
+		}		
+		$cart_items = WC()->cart->get_cart();
+		$removed_cart_item = isset($cart_items[$key_id]) ? $cart_items[$key_id] : false;
+		if($removed_cart_item){
+			$event_params = array('id' => $removed_cart_item['product_id']);
+			if(!empty($removed_cart_item['variation_id'])){
+				$event_params['option_id'] = $removed_cart_item['variation_id'];
+			}
+			$this->put_event_in_cookie_queue('track', 'remove_from_cart', $event_params);
+		}
+	}
+
+	public function prepare_variation_data($variation_id, $variation = false){
 		// prepare variation data array
 		$variation_data = array('id' => $variation_id, 'name' => '', 'price' => '');
 
-		// prepare variation name
-		$variation_attribute_count = 0;
-		foreach($variation as $attr => $value){
-			$variation_data['name'] = $variation_data['name'] . ($variation_attribute_count == 0 ? '' : ', ') . $value;
-			$variation_attribute_count++;
+		// prepare variation name if $variation is provided as argument
+		if($variation){
+			$variation_attribute_count = 0;
+			foreach($variation as $attr => $value){
+				$variation_data['name'] = $variation_data['name'] . ($variation_attribute_count == 0 ? '' : ', ') . $value;
+				$variation_attribute_count++;
+			}
 		}
 
 		// get variation price from object
@@ -259,6 +282,7 @@ class Metrilo_Woo_Analytics {
 
 		// background events tracking
 		add_action('woocommerce_add_to_cart', array($this, 'add_to_cart'), 10, 6);
+		add_action('woocommerce_before_cart_item_quantity_zero', array($this, 'remove_from_cart'), 10);
 
 		// add admin menu option
 		add_action('admin_menu', array(self::$instance, 'ensure_admin_menu'));
