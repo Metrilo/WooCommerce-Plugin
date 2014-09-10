@@ -198,6 +198,16 @@ class Metrilo_Woo_Analytics {
 		$image = get_post($image_id);
 		if($image && $image->guid) $product_hash['image_url'] = $image->guid;
 
+		// fetch the categories
+		$categories = wp_get_post_terms($product->id, 'product_cat');
+		if(!empty($categories)){
+			$categories_list = array();
+			foreach($categories as $cat){
+				array_push($categories_list, array('id' => $cat->term_id, 'name' => $cat->name));
+			}
+			if(!empty($categories_list)) $product_hash['categories'] = $categories_list;
+		}
+
 		// return 
 		return $product_hash;
 	}
