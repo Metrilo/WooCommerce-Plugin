@@ -9,9 +9,6 @@
  * License: GPL2
  */
 
-ini_set('error_reporting', E_ALL);
-ini_set('display_errors', 1);
-
 class Metrilo_Woo_Analytics {
 
 	private static $instance;
@@ -283,6 +280,10 @@ class Metrilo_Woo_Analytics {
 		return $variation_data;
 	}
 
+	public function applied_coupon($coupon_code){
+		$this->put_event_in_queue('track', 'applied_coupon', $coupon_code);	
+	}
+
 	// hooks
 
 	public function ensure_hooks(){
@@ -293,6 +294,7 @@ class Metrilo_Woo_Analytics {
 		// background events tracking
 		add_action('woocommerce_add_to_cart', array($this, 'add_to_cart'), 10, 6);
 		add_action('woocommerce_before_cart_item_quantity_zero', array($this, 'remove_from_cart'), 10);
+		add_filter('woocommerce_applied_coupon', array($this, 'applied_coupon'), 10);
 
 		// add admin menu option
 		add_action('admin_menu', array(self::$instance, 'ensure_admin_menu'));
