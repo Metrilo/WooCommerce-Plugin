@@ -3,10 +3,10 @@
  * Plugin Name: Metrilo for WooCommerce
  * Plugin URI: https://www.metrilo.com/woocommerce-integration
  * Description: Metrilo eCommerce Analytics one-click integration for WooCommerce
- * Version: 0.8
+ * Version: 0.69
  * Author: Metrilo
  * Author URI: https://www.metrilo.com/
- * License: GPL2
+ * License: GPLv2 or later
  */
 
 class Metrilo_Woo_Analytics {
