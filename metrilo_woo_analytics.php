@@ -2,12 +2,17 @@
 /**
  * Plugin Name: Metrilo for WooCommerce
  * Plugin URI: https://www.metrilo.com/woocommerce-integration
- * Description: Metrilo eCommerce Analytics one-click integration for WooCommerce
- * Version: 0.69
+ * Description: One-click WooCommerce integration with Metrilo
+ * Version: 0.71
  * Author: Metrilo
  * Author URI: https://www.metrilo.com/
  * License: GPLv2 or later
  */
+
+error_reporting(-1);
+ini_set('error_reporting', E_ALL);
+
+if ( ! class_exists( 'Metrilo_Woo_Analytics' ) ) :
 
 class Metrilo_Woo_Analytics {
 
@@ -287,6 +292,17 @@ class Metrilo_Woo_Analytics {
 	// hooks
 
 	public function ensure_hooks(){
+		// WooCommerce integration initiation
+		if ( class_exists( 'WC_Integration' ) ) {
+			// Include our integration class.
+			include_once(METRILO_PLUGIN_PATH.'/includes/integration.php');
+ 
+			// Register the integration.
+			add_filter( 'woocommerce_integrations', array( $this, 'add_integration' ) );
+		}
+
+
+
 		// general tracking snipper hook
 		add_filter('wp_head', array(self::$instance, 'render_snippet'));
 		add_filter('wp_head', array(self::$instance, 'woocommerce_tracking'));
@@ -308,6 +324,12 @@ class Metrilo_Woo_Analytics {
 	}
 
 	// admin panel stuff
+
+
+	public function add_integration($integrations){
+		$integrations[] = 'Metrilo_Woo_Analytics_Integration';
+		return $integrations;
+	}
 
 	public function ensure_admin_menu() {
 		//update_option('metrilo_woo_analytics', array('api_key' => ''));
@@ -396,5 +418,7 @@ add_action('plugins_loaded', 'Metrilo_Woo_Analytics::ensure_instance');
 
 add_action('wp_ajax_metrilo_clear', 'Metrilo_Woo_Analytics::clear_cookie_events');
 add_action('wp_ajax_nopriv_metrilo_clear', 'Metrilo_Woo_Analytics::clear_cookie_events');
+
+endif;
 
 ?>
