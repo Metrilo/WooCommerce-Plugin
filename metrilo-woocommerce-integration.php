@@ -1,7 +1,7 @@
 <?php
 /**
  * Plugin Name: Metrilo for WooCommerce
- * Plugin URI: https://www.metrilo.com/woocommerce-integration
+ * Plugin URI: https://www.metrilo.com/woocommerce-analytics
  * Description: One-click WooCommerce integration with Metrilo
  * Version: 0.86
  * Author: Metrilo
