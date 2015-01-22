@@ -308,6 +308,11 @@ class Metrilo_Woo_Analytics_Integration extends WC_Integration {
 			'payment_method'	=> $order->payment_method_title
 		);
 
+		$coupons_applied = $order->get_used_coupons();
+		if(count($coupons_applied) > 0){
+			$purchase_params['coupons'] = $coupons_applied;
+		}
+
 		// add the items data to the order
 		$order_items = $order->get_items();
 		foreach($order_items as $product){
