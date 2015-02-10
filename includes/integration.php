@@ -93,7 +93,11 @@ class Metrilo_Woo_Analytics_Integration extends WC_Integration {
 		add_action('woocommerce_before_cart_item_quantity_zero', array($this, 'remove_from_cart'), 10);
 		add_filter('woocommerce_applied_coupon', array($this, 'applied_coupon'), 10);
 
+		// hook on new order placed
 		add_action('woocommerce_checkout_order_processed', array($this, 'new_order_event'), 10);
+
+		// hook on WooCommerce subscriptions renewal
+		add_action('woocommerce_subscriptions_renewal_order_created', array($this, 'new_subscription_order_event'), 10, 4);
 
 		// cookie clearing actions
 		add_action('wp_ajax_metrilo_clear', array($this, 'clear_cookie_events'));
@@ -247,9 +251,28 @@ class Metrilo_Woo_Analytics_Integration extends WC_Integration {
 		return array('method' => $method, 'event' => $event, 'params' => $params);
 	}
 
+	public function send_api_call($ident, $event, $params){
+		$this->prepare_secret_call_hash($ident, $event, $params);
+	}
+
+	private function prepare_secret_call_hash($ident, $event, $params){
+		$call = array(
+			'event_type'		=> $event, 
+			'params'			=> $params, 
+			'uid'				=> $ident, 
+			'token'				=> $this->api_key
+		);
+		ksort($call);
+		$based_call = base64_encode(json_encode($call));
+		$signature = md5($based_call.$this->api_secret);
+		$end_point = 'http://api.metrilo.dev/track?s='.$signature.'&hs='.$based_call;
+		file_get_contents($end_point);
+	}
+
 	public function add_to_cart($cart_item_key, $product_id, $quantity, $variation_id = false, $variation = false, $cart_item_data = false){
 		$product = get_product($product_id);
 		$this->put_event_in_cookie_queue('track', 'add_to_cart', $this->prepare_product_hash($product, $variation_id, $variation));
+		// $this->send_api_call('track', 'add_to_cart', $this->prepare_product_hash($product, $variation_id, $variation));
 		$items = $this->get_items_in_cookie();
 	}
 
@@ -341,6 +364,34 @@ class Metrilo_Woo_Analytics_Integration extends WC_Integration {
 		$this->put_event_in_cookie_queue('track', 'order', $purchase_params);
 		$this->put_event_in_cookie_queue('purchase', '', array('order_id' => $order_id, 'amount' => $order->get_total()));
 		$this->session_set($this->get_do_identify_cookie_name(), json_encode($this->identify_call_data, true));
+
+	}
+
+	public function new_subscription_order_event($order, $original_order, $product_id, $new_order_role){
+
+		$purchase_params = array(
+			'order_id' 			=> $order->id, 
+			'order_type'		=> 'renewal',
+			'amount' 			=> $order->get_total(), 
+			'shipping_amount' 	=> method_exists($order, 'get_total_shipping') ? $order->get_total_shipping() : $order->get_shipping(),
+			'tax_amount'		=> $order->get_total_tax(),
+			'items' 			=> array(),
+			'shipping_method'	=> $order->get_shipping_method(), 
+			'payment_method'	=> $order->payment_method_title
+		);
+
+
+		$product = get_product($product_id);
+
+		// prepare product data
+		$product_data = $this->prepare_product_hash($product);
+		$product_data['quantity'] = 1;
+
+		$purchase_params['items'] = array($product_data);
+
+		$email = get_post_meta($order->id, '_billing_email', true);
+
+		$this->send_api_call($email, 'order', $purchase_params);
 
 	}
 
