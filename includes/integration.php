@@ -37,9 +37,14 @@ class Metrilo_Woo_Analytics_Integration extends WC_Integration {
  
 		// Fetch the integration settings
 		$this->api_key = $this->get_option('api_key', false);
+		$this->api_secret = $this->get_option('api_secret', false);
+
 		// previous version compatibility - fetch token from Wordpress settings
 		if(empty($this->api_key)){
 			$this->api_key = $this->get_previous_version_settings_key();
+		}
+		if(empty($this->api_secret)){
+			$this->api_secret = false;
 		}
 
 		// ensure correct plugin path
@@ -467,9 +472,16 @@ class Metrilo_Woo_Analytics_Integration extends WC_Integration {
 	public function init_form_fields() {
 		$this->form_fields = array(
 			'api_key' => array(
-				'title'             => __( 'API Key', 'metrilo-woo-analytics' ),
+				'title'             => __( 'API Token', 'metrilo-woo-analytics' ),
 				'type'              => 'text',
-				'description'       => __( 'Enter your Metrilo API key. You can find it under "Settings" in your Metrilo account.<br /> Don\'t have one? <a href="https://www.metrilo.com/signup?ref=woointegration" target="_blank">Sign-up for free</a> now, it only takes a few seconds.', 'metrilo-woo-analytics' ),
+				'description'       => __( 'Enter your Metrilo API token. You can find it under "Settings" in your Metrilo account.<br /> Don\'t have one? <a href="https://www.metrilo.com/signup?ref=woointegration" target="_blank">Sign-up for free</a> now, it only takes a few seconds.', 'metrilo-woo-analytics' ),
+				'desc_tip'          => false,
+				'default'           => ''
+			),
+			'api_secret' => array(
+				'title'             => __( 'API Secret Key', 'metrilo-woo-analytics' ),
+				'type'              => 'text',
+				'description'       => __( 'Enter your Metrilo API secret key.', 'metrilo-woo-analytics' ),
 				'desc_tip'          => false,
 				'default'           => ''
 			)
