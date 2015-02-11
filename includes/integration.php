@@ -409,8 +409,8 @@ class Metrilo_Woo_Analytics_Integration extends WC_Integration {
 	}
 
 	public function clear_items_in_cookie(){
-		$this->session_set($this->get_cookie_name(), json_decode(array(), true));
-		$this->session_set($this->get_do_identify_cookie_name(), json_decode(array(), true));
+		$this->session_set($this->get_cookie_name(), json_encode(array(), true));
+		$this->session_set($this->get_do_identify_cookie_name(), json_encode(array(), true));
 	}
 
 	private function get_cookie_name(){
