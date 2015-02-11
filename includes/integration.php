@@ -251,28 +251,46 @@ class Metrilo_Woo_Analytics_Integration extends WC_Integration {
 		return array('method' => $method, 'event' => $event, 'params' => $params);
 	}
 
-	public function send_api_call($ident, $event, $params){
-		$this->prepare_secret_call_hash($ident, $event, $params);
+	public function send_api_call($ident, $event, $params, $identity_data = false){
+		$this->prepare_secret_call_hash($ident, $event, $params, $identity_data);
 	}
 
-	private function prepare_secret_call_hash($ident, $event, $params){
-		$call = array(
-			'event_type'		=> $event, 
-			'params'			=> $params, 
-			'uid'				=> $ident, 
-			'token'				=> $this->api_key
-		);
-		ksort($call);
-		$based_call = base64_encode(json_encode($call));
-		$signature = md5($based_call.$this->api_secret);
-		$end_point = 'http://api.metrilo.dev/track?s='.$signature.'&hs='.$based_call;
-		file_get_contents($end_point);
+	private function prepare_secret_call_hash($ident, $event, $params, $identity_data = false){
+
+		// prepare API call params
+
+		try {
+
+			$call = array(
+				'event_type'		=> $event, 
+				'params'			=> $params, 
+				'uid'				=> $ident, 
+				'token'				=> $this->api_key
+			);
+
+			// put identity data in call if available
+			if($identity_data){
+				$call['identity'] = $identity_data;
+			}
+
+			// sort for salting and prepare base64
+			ksort($call);
+			$based_call = base64_encode(json_encode($call));
+			$signature = md5($based_call.$this->api_secret);
+
+			// generate API call end point and call it
+			$end_point = 'http://api.metrilo.dev/track?s='.$signature.'&hs='.$based_call;
+			wp_remote_get($end_point);
+
+		} catch (Exception $e){
+
+		}
+
 	}
 
 	public function add_to_cart($cart_item_key, $product_id, $quantity, $variation_id = false, $variation = false, $cart_item_data = false){
 		$product = get_product($product_id);
 		$this->put_event_in_cookie_queue('track', 'add_to_cart', $this->prepare_product_hash($product, $variation_id, $variation));
-		// $this->send_api_call('track', 'add_to_cart', $this->prepare_product_hash($product, $variation_id, $variation));
 		$items = $this->get_items_in_cookie();
 	}
 
@@ -369,29 +387,40 @@ class Metrilo_Woo_Analytics_Integration extends WC_Integration {
 
 	public function new_subscription_order_event($order, $original_order, $product_id, $new_order_role){
 
-		$purchase_params = array(
-			'order_id' 			=> $order->id, 
-			'order_type'		=> 'renewal',
-			'amount' 			=> $order->get_total(), 
-			'shipping_amount' 	=> method_exists($order, 'get_total_shipping') ? $order->get_total_shipping() : $order->get_shipping(),
-			'tax_amount'		=> $order->get_total_tax(),
-			'items' 			=> array(),
-			'shipping_method'	=> $order->get_shipping_method(), 
-			'payment_method'	=> $order->payment_method_title
-		);
+		try {
+
+			$purchase_params = array(
+				'order_id' 			=> $order->id, 
+				'order_type'		=> 'renewal',
+				'amount' 			=> $order->get_total(), 
+				'shipping_amount' 	=> method_exists($order, 'get_total_shipping') ? $order->get_total_shipping() : $order->get_shipping(),
+				'tax_amount'		=> $order->get_total_tax(),
+				'items' 			=> array(),
+				'shipping_method'	=> $order->get_shipping_method(), 
+				'payment_method'	=> $order->payment_method_title
+			);
+
+			$identity_data = array(
+						'email' 		=> get_post_meta($order->id, '_billing_email', true),
+						'first_name' 	=> get_post_meta($order->id, '_billing_first_name', true),
+						'last_name' 	=> get_post_meta($order->id, '_billing_last_name', true),
+						'name'			=> get_post_meta($order->id, '_billing_first_name', true) . ' ' . get_post_meta($order->id, '_billing_last_name', true),
+			);
 
 
-		$product = get_product($product_id);
+			$product = get_product($product_id);
 
-		// prepare product data
-		$product_data = $this->prepare_product_hash($product);
-		$product_data['quantity'] = 1;
+			// prepare product data
+			$product_data = $this->prepare_product_hash($product);
+			$product_data['quantity'] = 1;
 
-		$purchase_params['items'] = array($product_data);
+			$purchase_params['items'] = array($product_data);
 
-		$email = get_post_meta($order->id, '_billing_email', true);
+			$this->send_api_call($identity_data['email'], 'order', $purchase_params, $identity_data);
 
-		$this->send_api_call($email, 'order', $purchase_params);
+		}catch (Exception $e){
+
+		}
 
 	}
 
