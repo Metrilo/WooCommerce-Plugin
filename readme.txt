@@ -1,6 +1,6 @@
 === WooCommerce Analytics & CRM by Metrilo ===
 Contributors: MurryIvanoff
-Tags: analytics, reporting, tracking, woocommerce, ecommerce, funnels, metrics, kissmetrics, mixpanel, crm, history, products, items, rjmetrics, analytics dashboard, google analytics, products, retention, coupons, customers, big data, customer relationship management, subscriptions, woocommerce subscriptions, churn
+Tags: analytics, reporting, tracking, woocommerce, ecommerce, funnels, metrics, kissmetrics, mixpanel, crm, history, products, items, rjmetrics, analytics dashboard, google analytics, products, retention, coupons, customers, big data, customer relationship management, subscriptions, woocommerce subscriptions, churn, customer analytics, insights, ltv
 Requires at least: 2.9.2
 Tested up to: 4.1
 Stable Tag: 0.99
