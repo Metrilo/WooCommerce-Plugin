@@ -6,6 +6,7 @@ if ( ! class_exists( 'Metrilo_Woo_Analytics_Integration' ) ) :
 class Metrilo_Woo_Analytics_Integration extends WC_Integration {
 
 
+	private $integration_version = '1.2.0';
 	private $events_queue = array();
 	private $single_item_tracked = false;
 	private $has_events_in_cookie = false;
@@ -210,12 +211,8 @@ class Metrilo_Woo_Analytics_Integration extends WC_Integration {
 							array_push($purchase_params['items'], $product_hash);
 						}
 
-						$identity_data = array(
-									'email' 		=> get_post_meta($order->id, '_billing_email', true),
-									'first_name' 	=> get_post_meta($order->id, '_billing_first_name', true),
-									'last_name' 	=> get_post_meta($order->id, '_billing_last_name', true),
-									'name'			=> get_post_meta($order->id, '_billing_first_name', true) . ' ' . get_post_meta($order->id, '_billing_last_name', true),
-						);
+						// prepare order identity data
+						$identity_data = $this->prepare_order_identity_data($order);
 
 						$this->send_api_call($identity_data['email'], 'order', $purchase_params, $identity_data, $order_time_in_ms, $call_params);
 
@@ -228,6 +225,36 @@ class Metrilo_Woo_Analytics_Integration extends WC_Integration {
 		}
 
 		return true;
+	}
+
+	public function prepare_order_identity_data($order){
+			$identity_data = array(
+						'email' 		=> get_post_meta($order->id, '_billing_email', true),
+						'first_name' 	=> get_post_meta($order->id, '_billing_first_name', true),
+						'last_name' 	=> get_post_meta($order->id, '_billing_last_name', true),
+						'name'			=> get_post_meta($order->id, '_billing_first_name', true) . ' ' . get_post_meta($order->id, '_billing_last_name', true),
+			);
+
+			if(empty($identity_data['email'])){
+				$order_user = $this->get_order_user($order);
+				if($order_user){
+					$identity_data = array(
+						'email'						=> $order_user->data->user_email,
+						'name'						=> $order_user->data->display_name
+					);
+				}
+			}
+
+			return $identity_data;
+
+	}
+
+	public function get_order_user($order){
+		if($order->user_id){
+			$order_user = get_user_by('id', $order->user_id);
+			return $order_user;
+		}
+		return false;
 	}
 
 	public function ensure_path(){
@@ -392,9 +419,11 @@ class Metrilo_Woo_Analytics_Integration extends WC_Integration {
 
 			$call = array(
 				'event_type'		=> $event,
-				'params'			=> $params,
-				'uid'				=> $ident,
-				'token'				=> $this->api_key
+				'params'				=> $params,
+				'uid'						=> $ident,
+				'token'					=> $this->api_key,
+				'platform'			=> 'WordPress ' . get_bloginfo('version') . ' / WooCommerce ' . WOOCOMMERCE_VERSION,
+				'version'				=> $this->integration_version
 			);
 			if($time){
 				$call['time'] = $time;
@@ -546,17 +575,11 @@ class Metrilo_Woo_Analytics_Integration extends WC_Integration {
 				'payment_method'	=> $order->payment_method_title
 			);
 
-			$identity_data = array(
-						'email' 		=> get_post_meta($order->id, '_billing_email', true),
-						'first_name' 	=> get_post_meta($order->id, '_billing_first_name', true),
-						'last_name' 	=> get_post_meta($order->id, '_billing_last_name', true),
-						'name'			=> get_post_meta($order->id, '_billing_first_name', true) . ' ' . get_post_meta($order->id, '_billing_last_name', true),
-			);
-
-
-			$product = get_product($product_id);
+			// prepare order identity data
+			$identity_data = $this->prepare_order_identity_data($order);
 
 			// prepare product data
+			$product = get_product($product_id);
 			$product_data = $this->prepare_product_hash($product);
 			$product_data['quantity'] = 1;
 
@@ -613,12 +636,8 @@ class Metrilo_Woo_Analytics_Integration extends WC_Integration {
 					array_push($purchase_params['items'], $product_hash);
 				}
 
-				$identity_data = array(
-							'email' 		=> get_post_meta($order->id, '_billing_email', true),
-							'first_name' 	=> get_post_meta($order->id, '_billing_first_name', true),
-							'last_name' 	=> get_post_meta($order->id, '_billing_last_name', true),
-							'name'			=> get_post_meta($order->id, '_billing_first_name', true) . ' ' . get_post_meta($order->id, '_billing_last_name', true),
-				);
+				// prepare order identity data
+				$identity_data = $this->prepare_order_identity_data($order);
 
 				$this->send_api_call($identity_data['email'], 'order', $purchase_params, $identity_data, $order_time_in_ms, $call_params);
 
