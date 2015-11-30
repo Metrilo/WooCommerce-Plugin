@@ -66,6 +66,9 @@ Absolutely! We offer a 14-day free trial on every plan. No obligation. No credit
 == Changelog ==
 
 
+= 1.2.1 =
+* Optimized: When sending order events from session queue, make sure the order status us up-to-date (thanks, Ela!)
+
 = 1.2.0 =
 * Optimized: Syncing orders without billing data by using the WP user data
 
