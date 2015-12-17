@@ -6,13 +6,14 @@ if ( ! class_exists( 'Metrilo_Woo_Analytics_Integration' ) ) :
 class Metrilo_Woo_Analytics_Integration extends WC_Integration {
 
 
-	private $integration_version = '1.2.1';
+	private $integration_version = '1.2.2';
 	private $events_queue = array();
 	private $single_item_tracked = false;
 	private $has_events_in_cookie = false;
 	private $identify_call_data = false;
 	private $woo = false;
 	private $orders_per_import_chunk = 10;
+	private $batch_calls_queue = array();
 
 
 	/**
@@ -214,7 +215,7 @@ class Metrilo_Woo_Analytics_Integration extends WC_Integration {
 						// prepare order identity data
 						$identity_data = $this->prepare_order_identity_data($order);
 
-						$this->send_api_call($identity_data['email'], 'order', $purchase_params, $identity_data, $order_time_in_ms, $call_params);
+						$this->add_call_to_batch_queue($identity_data['email'], 'order', $purchase_params, $identity_data, $order_time_in_ms, $call_params);
 
 					}
 
@@ -222,6 +223,7 @@ class Metrilo_Woo_Analytics_Integration extends WC_Integration {
 
 				}
 			}
+			$this->send_batch_calls();
 		}
 
 		return true;
@@ -411,12 +413,44 @@ class Metrilo_Woo_Analytics_Integration extends WC_Integration {
 
 	}
 
-	private function prepare_secret_call_hash($ident, $event, $params, $identity_data = false, $time = false, $call_params = false){
+	private function clear_batch_call_queue(){
+		$this->batch_calls_queue = array();
+	}
 
-		// prepare API call params
+	private function add_call_to_batch_queue($ident, $event, $params, $identity_data = false, $time = false, $call_params = false){
+		$call = $this->build_call($ident, $event, $params, $identity_data, $time, $call_params);
+		array_push($this->batch_calls_queue, $call);
+	}
+
+	private function send_batch_calls(){
 
 		try {
 
+			$call = array(
+				'token'					=> $this->api_key,
+				'platform'			=> 'WordPress ' . get_bloginfo('version') . ' / WooCommerce ' . WOOCOMMERCE_VERSION,
+				'version'				=> $this->integration_version,
+				'events'				=> $this->batch_calls_queue
+			);
+
+			// sort for salting and prepare base64
+			ksort($call);
+			$based_call = base64_encode(json_encode($call));
+			$signature = md5($based_call.$this->api_secret);
+
+			// generate API call end point and call it
+			$end_point_params = array('s' => $signature, 'hs' => $based_call);
+			$c = wp_remote_post('http://p.metrilo.com/bt', array( 'body' => $end_point_params, 'timeout' => 15 ));
+
+		} catch (Exception $e){
+			return false;
+		}
+
+		return true;
+
+	}
+
+	private function build_call($ident, $event, $params, $identity_data = false, $time = false, $call_params = false){
 			$call = array(
 				'event_type'		=> $event,
 				'params'				=> $params,
@@ -425,6 +459,7 @@ class Metrilo_Woo_Analytics_Integration extends WC_Integration {
 				'platform'			=> 'WordPress ' . get_bloginfo('version') . ' / WooCommerce ' . WOOCOMMERCE_VERSION,
 				'version'				=> $this->integration_version
 			);
+
 			if($time){
 				$call['time'] = $time;
 			}
@@ -436,12 +471,21 @@ class Metrilo_Woo_Analytics_Integration extends WC_Integration {
 				}
 			}
 
-
-
 			// put identity data in call if available
 			if($identity_data){
 				$call['identity'] = $identity_data;
 			}
+
+			return $call;
+	}
+
+	private function prepare_secret_call_hash($ident, $event, $params, $identity_data = false, $time = false, $call_params = false){
+
+		// prepare API call params
+
+		try {
+
+			$call = $this->build_call($ident, $event, $params, $identity_data, $time, $call_params);
 
 			// sort for salting and prepare base64
 			ksort($call);
@@ -450,7 +494,7 @@ class Metrilo_Woo_Analytics_Integration extends WC_Integration {
 
 			// generate API call end point and call it
 			$end_point_params = array('s' => $signature, 'hs' => $based_call);
-			$c = wp_remote_post('http://p.metrilo.com/t', array( 'body' => $end_point_params, 'timeout' => 10 ));
+			$c = wp_remote_post('http://p.metrilo.com/t', array( 'body' => $end_point_params, 'timeout' => 15 ));
 
 		} catch (Exception $e){
 
