@@ -349,8 +349,8 @@ class Metrilo_Woo_Analytics_Integration extends WC_Integration {
 		}
 
 		// check if there are events in the queue to be sent to Metrilo
-		if(count($this->events_queue) > 0) $this->render_events();
 		if($this->identify_call_data !== false) $this->render_identify();
+		if(count($this->events_queue) > 0) $this->render_events();
 	}
 
 	public function prepare_product_hash($product, $variation_id = false, $variation = false){
