@@ -6,7 +6,7 @@ if ( ! class_exists( 'Metrilo_Woo_Analytics_Integration' ) ) :
 class Metrilo_Woo_Analytics_Integration extends WC_Integration {
 
 
-	private $integration_version = '1.2.3';
+	private $integration_version = '1.3.0';
 	private $events_queue = array();
 	private $single_item_tracked = false;
 	private $has_events_in_cookie = false;
@@ -185,6 +185,11 @@ class Metrilo_Woo_Analytics_Integration extends WC_Integration {
 							'shipping_method'	=> $order->get_shipping_method(),
 							'payment_method'	=> $order->payment_method_title
 						);
+
+						// check for multi currency
+						$purchase_params = $this->check_for_multi_currency($purchase_params);
+
+
 						$call_params = false;
 
 						// check if order has customer IP in it
@@ -360,6 +365,7 @@ class Metrilo_Woo_Analytics_Integration extends WC_Integration {
 			'price'			=> $product->get_price(),
 			'url'			=> get_permalink($product->id)
 		);
+
 		if($variation_id){
 			$variation_data = $this->prepare_variation_data($variation_id, $variation);
 			$product_hash['option_id'] = $variation_data['id'];
@@ -440,7 +446,7 @@ class Metrilo_Woo_Analytics_Integration extends WC_Integration {
 
 			// generate API call end point and call it
 			$end_point_params = array('s' => $signature, 'hs' => $based_call);
-			$c = wp_remote_post('http://p.metrilo.com/bt', array( 'body' => $end_point_params, 'timeout' => 15 ));
+			$c = wp_remote_post('http://p.metrilo.com/bt', array( 'body' => $end_point_params, 'timeout' => 20 ));
 
 		} catch (Exception $e){
 			return false;
@@ -577,6 +583,10 @@ class Metrilo_Woo_Analytics_Integration extends WC_Integration {
 			'payment_method'	=> $order->payment_method_title
 		);
 
+		// check for multi currency
+		$purchase_params = $this->check_for_multi_currency($purchase_params);
+
+
 		$coupons_applied = $order->get_used_coupons();
 		if(count($coupons_applied) > 0){
 			$purchase_params['coupons'] = $coupons_applied;
@@ -600,6 +610,17 @@ class Metrilo_Woo_Analytics_Integration extends WC_Integration {
 
 	}
 
+	public function check_for_multi_currency($purchase_params){
+		if(class_exists('Aelia_Order')){
+
+			$aelia_order = new Aelia_Order($purchase_params['order_id']);
+			$purchase_params['amount'] =  method_exists($aelia_order, 'get_total_in_base_currency') ? $aelia_order->get_total_in_base_currency() : $purchase_params['amount'];
+			$purchase_params['shipping_amount'] =  method_exists($aelia_order, 'get_total_shipping_in_base_currency') ? $aelia_order->get_total_shipping_in_base_currency() : $purchase_params['shipping_amount'];
+			$purchase_params['tax_amount'] =  method_exists($aelia_order, 'get_total_tax_in_base_currency') ? $aelia_order->get_total_tax_in_base_currency() : $purchase_params['tax_amount'];
+		}
+		return $purchase_params;
+	}
+
 	public function new_subscription_order_event($order, $original_order, $product_id, $new_order_role){
 
 		try {
@@ -607,17 +628,22 @@ class Metrilo_Woo_Analytics_Integration extends WC_Integration {
 
 
 			$purchase_params = array(
-				'order_id' 			=> $order->id,
-				'order_type'		=> 'renewal',
-				'meta_source'		=> '_renewal',
-				'order_status'		=> $this->get_order_status($order),
-				'amount' 			=> $order->get_total(),
+				'order_id' 					=> $order->id,
+				'order_type'				=> 'renewal',
+				'meta_source'				=> '_renewal',
+				'order_status'			=> $this->get_order_status($order),
+				'amount' 						=> $order->get_total(),
 				'shipping_amount' 	=> method_exists($order, 'get_total_shipping') ? $order->get_total_shipping() : $order->get_shipping(),
-				'tax_amount'		=> $order->get_total_tax(),
-				'items' 			=> array(),
-				'shipping_method'	=> $order->get_shipping_method(),
-				'payment_method'	=> $order->payment_method_title
+				'tax_amount'				=> $order->get_total_tax(),
+				'items' 						=> array(),
+				'shipping_method'		=> $order->get_shipping_method(),
+				'payment_method'		=> $order->payment_method_title,
+				'subscription_id'		=> $original_order->id
 			);
+
+			// check for multi currency
+			$purchase_params = $this->check_for_multi_currency($purchase_params);
+
 
 			// prepare order identity data
 			$identity_data = $this->prepare_order_identity_data($order);
@@ -653,6 +679,10 @@ class Metrilo_Woo_Analytics_Integration extends WC_Integration {
 					'shipping_method'	=> $order->get_shipping_method(),
 					'payment_method'	=> $order->payment_method_title
 				);
+
+				// check for multi currency
+				$purchase_params = $this->check_for_multi_currency($purchase_params);
+
 				$call_params = false;
 
 				// check if order has customer IP in it
@@ -702,6 +732,27 @@ class Metrilo_Woo_Analytics_Integration extends WC_Integration {
 			}
 		}
 	}
+
+	/**
+	 *
+	 *
+	 * WooCommerce Subscriptions tracking
+	 *
+	 */
+
+
+	public function has_wcs(){
+		return class_exists('WC_Subscriptions');
+	}
+
+	public function get_wcs_version(){
+		return $this->has_wcs() && !empty( WC_Subscriptions::$version ) ? WC_Subscriptions::$version : null;
+	}
+
+	public function is_wcs_2(){
+		return $this->has_wcs() && version_compare($this->get_wcs_version(), '2.0-beta-1', '>=');
+	}
+
 
 	/**
 	 *
