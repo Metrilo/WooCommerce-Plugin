@@ -6,7 +6,7 @@ if ( ! class_exists( 'Metrilo_Woo_Analytics_Integration' ) ) :
 class Metrilo_Woo_Analytics_Integration extends WC_Integration {
 
 
-	private $integration_version = '1.2.3';
+	private $integration_version = '1.3.0';
 	private $events_queue = array();
 	private $single_item_tracked = false;
 	private $has_events_in_cookie = false;
@@ -174,17 +174,8 @@ class Metrilo_Woo_Analytics_Integration extends WC_Integration {
 					if(!empty($order) && !empty($order->id)){
 
 						// prepare the order data
-						$purchase_params = array(
-							'order_id' 			=> $order_id,
-							'order_type' 		=> 'import',
-							'order_status' 		=> $this->get_order_status($order),
-							'amount' 			=> $order->get_total(),
-							'shipping_amount' 	=> method_exists($order, 'get_total_shipping') ? $order->get_total_shipping() : $order->get_shipping(),
-							'tax_amount'		=> $order->get_total_tax(),
-							'items' 			=> array(),
-							'shipping_method'	=> $order->get_shipping_method(),
-							'payment_method'	=> $order->payment_method_title
-						);
+						$purchase_params = $this->prepare_order_params($order);
+						$purchase_params['order_type'] = 'import';
 						$call_params = false;
 
 						// check if order has customer IP in it
@@ -194,11 +185,6 @@ class Metrilo_Woo_Analytics_Integration extends WC_Integration {
 						}
 
 						$order_time_in_ms = get_post_time('U', true, $order_id) * 1000;
-
-						$coupons_applied = $order->get_used_coupons();
-						if(count($coupons_applied) > 0){
-							$purchase_params['coupons'] = $coupons_applied;
-						}
 
 						// add the items data to the order
 						$order_items = $order->get_items();
@@ -565,22 +551,7 @@ class Metrilo_Woo_Analytics_Integration extends WC_Integration {
 		);
 
 		// prepare the order data
-		$purchase_params = array(
-			'order_id' 			=> $order_id,
-			'order_type'		=> 'purchase',
-			'order_status'		=> $this->get_order_status($order),
-			'amount' 			=> $order->get_total(),
-			'shipping_amount' 	=> method_exists($order, 'get_total_shipping') ? $order->get_total_shipping() : $order->get_shipping(),
-			'tax_amount'		=> $order->get_total_tax(),
-			'items' 			=> array(),
-			'shipping_method'	=> $order->get_shipping_method(),
-			'payment_method'	=> $order->payment_method_title
-		);
-
-		$coupons_applied = $order->get_used_coupons();
-		if(count($coupons_applied) > 0){
-			$purchase_params['coupons'] = $coupons_applied;
-		}
+		$purchase_params = $this->prepare_order_params($order);
 
 		// add the items data to the order
 		$order_items = $order->get_items();
@@ -605,19 +576,9 @@ class Metrilo_Woo_Analytics_Integration extends WC_Integration {
 		try {
 
 
-
-			$purchase_params = array(
-				'order_id' 			=> $order->id,
-				'order_type'		=> 'renewal',
-				'meta_source'		=> '_renewal',
-				'order_status'		=> $this->get_order_status($order),
-				'amount' 			=> $order->get_total(),
-				'shipping_amount' 	=> method_exists($order, 'get_total_shipping') ? $order->get_total_shipping() : $order->get_shipping(),
-				'tax_amount'		=> $order->get_total_tax(),
-				'items' 			=> array(),
-				'shipping_method'	=> $order->get_shipping_method(),
-				'payment_method'	=> $order->payment_method_title
-			);
+			$purchase_params = $this->prepare_order_params($order);
+			$purchase_params['order_type'] = 'renewal';
+			$purchase_params['meta_source'] = '_renewal';
 
 			// prepare order identity data
 			$identity_data = $this->prepare_order_identity_data($order);
@@ -643,16 +604,7 @@ class Metrilo_Woo_Analytics_Integration extends WC_Integration {
 				$order = new WC_Order($order_id);
 
 				// prepare the order data
-				$purchase_params = array(
-					'order_id' 			=> $order_id,
-					'order_status' 		=> $this->get_order_status($order),
-					'amount' 			=> $order->get_total(),
-					'shipping_amount' 	=> method_exists($order, 'get_total_shipping') ? $order->get_total_shipping() : $order->get_shipping(),
-					'tax_amount'		=> $order->get_total_tax(),
-					'items' 			=> array(),
-					'shipping_method'	=> $order->get_shipping_method(),
-					'payment_method'	=> $order->payment_method_title
-				);
+				$purchase_params = $this->prepare_order_params($order);
 				$call_params = false;
 
 				// check if order has customer IP in it
@@ -662,11 +614,6 @@ class Metrilo_Woo_Analytics_Integration extends WC_Integration {
 				}
 
 				$order_time_in_ms = get_post_time('U', true, $order_id) * 1000;
-
-				$coupons_applied = $order->get_used_coupons();
-				if(count($coupons_applied) > 0){
-					$purchase_params['coupons'] = $coupons_applied;
-				}
 
 				// add the items data to the order
 				$order_items = $order->get_items();
@@ -701,6 +648,53 @@ class Metrilo_Woo_Analytics_Integration extends WC_Integration {
 				return $order_object->status;
 			}
 		}
+	}
+
+	public function prepare_order_params($order){
+
+		// prepare basic order data
+		$purchase_params = array(
+			'order_id' 			=> $order->id,
+			'order_status' 		=> $this->get_order_status($order),
+			'amount' 			=> $order->get_total(),
+			'shipping_amount' 	=> method_exists($order, 'get_total_shipping') ? $order->get_total_shipping() : $order->get_shipping(),
+			'tax_amount'		=> $order->get_total_tax(),
+			'items' 			=> array(),
+			'shipping_method'	=> $order->get_shipping_method(),
+			'payment_method'	=> $order->payment_method_title
+		);
+
+		// attach billing data to order
+		if(isset($order->billing_phone)){
+			$purchase_params['billing_phone'] = $order->billing_phone;
+		}
+		if(isset($order->billing_city)){
+			$purchase_params['billing_city'] = $order->billing_city;
+		}
+		if(isset($order->billing_postcode)){
+			$purchase_params['billing_postcode'] = $order->billing_postcode;
+		}
+		if(isset($order->billing_country)){
+			$purchase_params['billing_country'] = $order->billing_country;
+		}
+		if(isset($order->billing_address_1)){
+			$purchase_params['billing_address_line_1'] = $order->billing_address_1;
+		}
+		if(isset($order->billing_address_2)){
+			$purchase_params['billing_address_line_2'] = $order->billing_address_2;
+		}
+		if(isset($order->billing_company)){
+			$purchase_params['billing_company'] = $order->billing_company;
+		}
+
+		// attach coupons data
+		$coupons_applied = $order->get_used_coupons();
+		if(count($coupons_applied) > 0){
+			$purchase_params['coupons'] = $coupons_applied;
+		}
+
+		return $purchase_params;
+
 	}
 
 	/**
