@@ -6,7 +6,7 @@ if ( ! class_exists( 'Metrilo_Woo_Analytics_Integration' ) ) :
 class Metrilo_Woo_Analytics_Integration extends WC_Integration {
 
 
-	private $integration_version = '1.3.0';
+	private $integration_version = '1.3.1';
 	private $events_queue = array();
 	private $single_item_tracked = false;
 	private $has_events_in_cookie = false;
@@ -480,7 +480,7 @@ class Metrilo_Woo_Analytics_Integration extends WC_Integration {
 
 			// generate API call end point and call it
 			$end_point_params = array('s' => $signature, 'hs' => $based_call);
-			$c = wp_remote_post('http://p.metrilo.com/t', array( 'body' => $end_point_params, 'timeout' => 15 ));
+			$c = wp_remote_post('http://p.metrilo.com/t', array( 'body' => $end_point_params, 'timeout' => 15, 'blocking' => false ));
 
 		} catch (Exception $e){
 
@@ -539,6 +539,8 @@ class Metrilo_Woo_Analytics_Integration extends WC_Integration {
 		// fetch the order
 		$order = new WC_Order($order_id);
 
+		$call_params = false;
+
 		// identify user - put identify data in cookie
 		$this->identify_call_data = array(
 			'id'		=> get_post_meta($order_id, '_billing_email', true),
@@ -553,6 +555,16 @@ class Metrilo_Woo_Analytics_Integration extends WC_Integration {
 		// prepare the order data
 		$purchase_params = $this->prepare_order_params($order);
 
+		// check if order has customer IP in it
+		$customer_ip = $this->get_order_ip($order_id);
+		if($customer_ip){
+			$call_params = array('use_ip' => $customer_ip);
+		}
+
+		// prepare the order time
+		$order_time_in_ms = get_post_time('U', true, $order_id) * 1000;
+
+
 		// add the items data to the order
 		$order_items = $order->get_items();
 		foreach($order_items as $product){
@@ -565,6 +577,11 @@ class Metrilo_Woo_Analytics_Integration extends WC_Integration {
 			array_push($purchase_params['items'], $product_hash);
 		}
 
+		// prepare order identity data
+		$identity_data = $this->prepare_order_identity_data($order);
+
+		// send backend call with the order
+		$this->send_api_call($identity_data['email'], 'order', $purchase_params, $identity_data, $order_time_in_ms, $call_params);
 		// put the order and identify data in cookies
 		$this->put_event_in_cookie_queue('track', 'order', $purchase_params);
 		$this->session_set($this->get_do_identify_cookie_name(), json_encode($this->identify_call_data, true));
