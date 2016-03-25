@@ -688,6 +688,9 @@ class Metrilo_Woo_Analytics_Integration extends WC_Integration {
 		if(isset($order->billing_city)){
 			$purchase_params['billing_city'] = $order->billing_city;
 		}
+		if(isset($order->billing_state)){
+			$purchase_params['billing_region'] = $order->billing_state;
+		}
 		if(isset($order->billing_postcode)){
 			$purchase_params['billing_postcode'] = $order->billing_postcode;
 		}
