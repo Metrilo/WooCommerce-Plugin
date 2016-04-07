@@ -584,7 +584,7 @@ class Metrilo_Woo_Analytics_Integration extends WC_Integration {
 		$this->send_api_call($identity_data['email'], 'order', $purchase_params, $identity_data, $order_time_in_ms, $call_params);
 		// put the order and identify data in cookies
 		$this->put_event_in_cookie_queue('track', 'order', $purchase_params);
-		$this->session_set($this->get_do_identify_cookie_name(), json_encode($this->identify_call_data, true));
+		$this->session_set($this->get_do_identify_cookie_name(), json_encode($this->identify_call_data));
 
 	}
 
@@ -781,7 +781,7 @@ class Metrilo_Woo_Analytics_Integration extends WC_Integration {
 		$items = $this->get_items_in_cookie();
 		if(empty($items)) $items = array();
 		array_push($items, $data);
-		$encoded_items = json_encode($items, true);
+		$encoded_items = json_encode($items);
 		$this->session_set($this->get_cookie_name(), $encoded_items);
 	}
 
@@ -800,8 +800,8 @@ class Metrilo_Woo_Analytics_Integration extends WC_Integration {
 	}
 
 	public function clear_items_in_cookie(){
-		$this->session_set($this->get_cookie_name(), json_encode(array(), true));
-		$this->session_set($this->get_do_identify_cookie_name(), json_encode(array(), true));
+		$this->session_set($this->get_cookie_name(), json_encode(array()));
+		$this->session_set($this->get_do_identify_cookie_name(), json_encode(array()));
 	}
 
 	public function get_order_ip($order_id){
