@@ -6,7 +6,7 @@ if ( ! class_exists( 'Metrilo_Woo_Analytics_Integration' ) ) :
 class Metrilo_Woo_Analytics_Integration extends WC_Integration {
 
 
-	private $integration_version = '1.3.2';
+	private $integration_version = '1.3.3';
 	private $events_queue = array();
 	private $single_item_tracked = false;
 	private $has_events_in_cookie = false;
@@ -788,14 +788,20 @@ class Metrilo_Woo_Analytics_Integration extends WC_Integration {
 	public function get_items_in_cookie(){
 		$items = array();
 		$data = $this->session_get($this->get_cookie_name());
-		if(!empty($data)) $items = json_decode(stripslashes($data), true);
+		if(!empty($data)){
+			if(get_magic_quotes_gpc()) $data = stripslashes($data);
+			$items = json_decode($data, true);
+		}
 		return $items;
 	}
 
 	public function get_identify_data_in_cookie(){
 		$identify = array();
 		$data = $this->session_get($this->get_do_identify_cookie_name());
-		if(!empty($data)) $identify = json_decode(stripslashes($data), true);
+		if(!empty($data)){
+			if(get_magic_quotes_gpc()) $data = stripslashes($data);
+			$identify = json_decode($data, true);
+		}
 		return $identify;
 	}
 
