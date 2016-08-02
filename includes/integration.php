@@ -6,7 +6,7 @@ if ( ! class_exists( 'Metrilo_Woo_Analytics_Integration' ) ) :
 class Metrilo_Woo_Analytics_Integration extends WC_Integration {
 
 
-	private $integration_version = '1.3.5';
+	private $integration_version = '1.3.6';
 	private $events_queue = array();
 	private $single_item_tracked = false;
 	private $has_events_in_cookie = false;
@@ -443,7 +443,8 @@ class Metrilo_Woo_Analytics_Integration extends WC_Integration {
 				'uid'						=> $ident,
 				'token'					=> $this->api_key,
 				'platform'			=> 'WordPress ' . get_bloginfo('version') . ' / WooCommerce ' . WOOCOMMERCE_VERSION,
-				'version'				=> $this->integration_version
+				'version'				=> $this->integration_version,
+				'server_time'		=> round(microtime(true) * 1000)
 			);
 
 			if($time){
