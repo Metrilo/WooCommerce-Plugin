@@ -426,7 +426,7 @@ class Metrilo_Woo_Analytics_Integration extends WC_Integration {
 
 			// generate API call end point and call it
 			$end_point_params = array('s' => $signature, 'hs' => $based_call);
-			$c = wp_remote_post('http://api.metrilo.com/bt', array( 'body' => $end_point_params, 'timeout' => 15, 'blocking' => false ));
+			$c = wp_remote_post('http://p.metrilo.com/bt', array( 'body' => $end_point_params, 'timeout' => 15, 'blocking' => false ));
 
 		} catch (Exception $e){
 			return false;
