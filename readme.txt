@@ -3,7 +3,7 @@ Contributors: MurryIvanoff
 Tags: woocommerce, analytics, reporting, tracking, woo, ecommerce, funnels, metrics, kissmetrics, mixpanel, crm, history, products, items, rjmetrics, analytics dashboard, google analytics, products, retention, coupons, customers, big data, customer relationship management, subscriptions, woocommerce subscriptions, churn, customer analytics, insights, ltv, email marketing, email, triggered emails, cohorts, sales analytics, customer intelligence, email marketing
 Requires at least: 2.9.2
 Tested up to: 4.5.3
-Stable Tag: 1.3.7
+Stable Tag: 1.3.8
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -64,6 +64,9 @@ Absolutely! We offer a 14-day free trial on every plan. No obligation. No credit
 3. Products performance - see top performing products and how are they connected to other products in your catalog
 
 == Changelog ==
+
+= 1.3.8 =
+* Improved: Integrate with Aelia Currency Switcher plugin
 
 = 1.3.7 =
 * Updated: Now officially supporting WordPress 4.5.3
