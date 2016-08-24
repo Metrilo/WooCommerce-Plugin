@@ -6,7 +6,7 @@ if ( ! class_exists( 'Metrilo_Woo_Analytics_Integration' ) ) :
 class Metrilo_Woo_Analytics_Integration extends WC_Integration {
 
 
-	private $integration_version = '1.3.7';
+	private $integration_version = '1.3.8';
 	private $events_queue = array();
 	private $single_item_tracked = false;
 	private $has_events_in_cookie = false;
@@ -346,6 +346,7 @@ class Metrilo_Woo_Analytics_Integration extends WC_Integration {
 			'price'			=> $product->get_price(),
 			'url'			=> get_permalink($product->id)
 		);
+
 		if($variation_id){
 			$variation_data = $this->prepare_variation_data($variation_id, $variation);
 			$product_hash['option_id'] = $variation_data['id'];
@@ -589,6 +590,17 @@ class Metrilo_Woo_Analytics_Integration extends WC_Integration {
 
 	}
 
+	public function check_for_multi_currency($purchase_params){
+		if(class_exists('Aelia_Order')){
+
+			$aelia_order = new Aelia_Order($purchase_params['order_id']);
+			$purchase_params['amount'] =  method_exists($aelia_order, 'get_total_in_base_currency') ? $aelia_order->get_total_in_base_currency() : $purchase_params['amount'];
+			$purchase_params['shipping_amount'] =  method_exists($aelia_order, 'get_total_shipping_in_base_currency') ? $aelia_order->get_total_shipping_in_base_currency() : $purchase_params['shipping_amount'];
+			$purchase_params['tax_amount'] =  method_exists($aelia_order, 'get_total_tax_in_base_currency') ? $aelia_order->get_total_tax_in_base_currency() : $purchase_params['tax_amount'];
+		}
+		return $purchase_params;
+	}
+
 	public function new_subscription_order_event($order, $original_order, $product_id, $new_order_role){
 
 		try {
@@ -672,12 +684,12 @@ class Metrilo_Woo_Analytics_Integration extends WC_Integration {
 
 		// prepare basic order data
 		$purchase_params = array(
-			'order_id' 			=> $order->id,
+			'order_id' 			  => $order->id,
 			'order_status' 		=> $this->get_order_status($order),
-			'amount' 			=> $order->get_total(),
-			'shipping_amount' 	=> method_exists($order, 'get_total_shipping') ? $order->get_total_shipping() : $order->get_shipping(),
-			'tax_amount'		=> $order->get_total_tax(),
-			'items' 			=> array(),
+			'amount' 			    => $order->get_total(),
+			'shipping_amount' => method_exists($order, 'get_total_shipping') ? $order->get_total_shipping() : $order->get_shipping(),
+			'tax_amount'		  => $order->get_total_tax(),
+			'items' 			    => array(),
 			'shipping_method'	=> $order->get_shipping_method(),
 			'payment_method'	=> $order->payment_method_title
 		);
@@ -714,9 +726,33 @@ class Metrilo_Woo_Analytics_Integration extends WC_Integration {
 			$purchase_params['coupons'] = $coupons_applied;
 		}
 
+		// extra check for multicurrency websites
+		$purchase_params = $this->check_for_multi_currency($purchase_params);
+
 		return $purchase_params;
 
 	}
+
+	/**
+	 *
+	 *
+	 * WooCommerce Subscriptions tracking
+	 *
+	 */
+
+
+	public function has_wcs(){
+		return class_exists('WC_Subscriptions');
+	}
+
+	public function get_wcs_version(){
+		return $this->has_wcs() && !empty( WC_Subscriptions::$version ) ? WC_Subscriptions::$version : null;
+	}
+
+	public function is_wcs_2(){
+		return $this->has_wcs() && version_compare($this->get_wcs_version(), '2.0-beta-1', '>=');
+	}
+
 
 	/**
 	 *
