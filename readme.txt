@@ -2,8 +2,8 @@
 Contributors: MurryIvanoff
 Tags: woocommerce, analytics, reporting, tracking, woo, ecommerce, funnels, metrics, kissmetrics, mixpanel, crm, history, products, items, rjmetrics, analytics dashboard, google analytics, products, retention, coupons, customers, big data, customer relationship management, subscriptions, woocommerce subscriptions, churn, customer analytics, insights, ltv, email marketing, email, triggered emails, cohorts, sales analytics, customer intelligence, email marketing
 Requires at least: 2.9.2
-Tested up to: 4.4.2
-Stable Tag: 1.3.0
+Tested up to: 4.5.3
+Stable Tag: 1.3.7
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -65,6 +65,29 @@ Absolutely! We offer a 14-day free trial on every plan. No obligation. No credit
 
 == Changelog ==
 
+= 1.3.7 =
+* Updated: Now officially supporting WordPress 4.5.3
+
+= 1.3.6 =
+* Optimized: Also send server time when sending API calls to improve reliability of Metrilo order status tracking
+
+= 1.3.5 =
+* Optimized: Batch API calls are moved to a better endpoint
+
+= 1.3.4 =
+* Optimized: Importing historical orders
+
+= 1.3.3 =
+* Fixed: Fixed an issue with PHP Magic quotes
+
+= 1.3.2 =
+* Fixed: Fixed an issue with PHP versions older than 5.3
+
+= 1.3.1 =
+* Improved: Send orders to Metrilo regardless if the visitor goes to the Thank You page
+
+= 1.3.0 =
+* New: Metrilo is now also syncing customer contact data, including phone number
 
 = 1.2.3 =
 * Optimized: Tracking accuracy improved for slow order checkout flows

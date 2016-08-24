@@ -6,13 +6,13 @@ if ( ! class_exists( 'Metrilo_Woo_Analytics_Integration' ) ) :
 class Metrilo_Woo_Analytics_Integration extends WC_Integration {
 
 
-	private $integration_version = '1.3.0';
+	private $integration_version = '1.3.7';
 	private $events_queue = array();
 	private $single_item_tracked = false;
 	private $has_events_in_cookie = false;
 	private $identify_call_data = false;
 	private $woo = false;
-	private $orders_per_import_chunk = 10;
+	private $orders_per_import_chunk = 25;
 	private $batch_calls_queue = array();
 
 
@@ -174,22 +174,8 @@ class Metrilo_Woo_Analytics_Integration extends WC_Integration {
 					if(!empty($order) && !empty($order->id)){
 
 						// prepare the order data
-						$purchase_params = array(
-							'order_id' 			=> $order_id,
-							'order_type' 		=> 'import',
-							'order_status' 		=> $this->get_order_status($order),
-							'amount' 			=> $order->get_total(),
-							'shipping_amount' 	=> method_exists($order, 'get_total_shipping') ? $order->get_total_shipping() : $order->get_shipping(),
-							'tax_amount'		=> $order->get_total_tax(),
-							'items' 			=> array(),
-							'shipping_method'	=> $order->get_shipping_method(),
-							'payment_method'	=> $order->payment_method_title
-						);
-
-						// check for multi currency
-						$purchase_params = $this->check_for_multi_currency($purchase_params);
-
-
+						$purchase_params = $this->prepare_order_params($order);
+						$purchase_params['order_type'] = 'import';
 						$call_params = false;
 
 						// check if order has customer IP in it
@@ -199,11 +185,6 @@ class Metrilo_Woo_Analytics_Integration extends WC_Integration {
 						}
 
 						$order_time_in_ms = get_post_time('U', true, $order_id) * 1000;
-
-						$coupons_applied = $order->get_used_coupons();
-						if(count($coupons_applied) > 0){
-							$purchase_params['coupons'] = $coupons_applied;
-						}
 
 						// add the items data to the order
 						$order_items = $order->get_items();
@@ -446,7 +427,7 @@ class Metrilo_Woo_Analytics_Integration extends WC_Integration {
 
 			// generate API call end point and call it
 			$end_point_params = array('s' => $signature, 'hs' => $based_call);
-			$c = wp_remote_post('http://p.metrilo.com/bt', array( 'body' => $end_point_params, 'timeout' => 20 ));
+			$c = wp_remote_post('http://p.metrilo.com/bt', array( 'body' => $end_point_params, 'timeout' => 15, 'blocking' => false ));
 
 		} catch (Exception $e){
 			return false;
@@ -463,7 +444,8 @@ class Metrilo_Woo_Analytics_Integration extends WC_Integration {
 				'uid'						=> $ident,
 				'token'					=> $this->api_key,
 				'platform'			=> 'WordPress ' . get_bloginfo('version') . ' / WooCommerce ' . WOOCOMMERCE_VERSION,
-				'version'				=> $this->integration_version
+				'version'				=> $this->integration_version,
+				'server_time'		=> round(microtime(true) * 1000)
 			);
 
 			if($time){
@@ -500,7 +482,7 @@ class Metrilo_Woo_Analytics_Integration extends WC_Integration {
 
 			// generate API call end point and call it
 			$end_point_params = array('s' => $signature, 'hs' => $based_call);
-			$c = wp_remote_post('http://p.metrilo.com/t', array( 'body' => $end_point_params, 'timeout' => 15 ));
+			$c = wp_remote_post('http://p.metrilo.com/t', array( 'body' => $end_point_params, 'timeout' => 15, 'blocking' => false ));
 
 		} catch (Exception $e){
 
@@ -559,6 +541,8 @@ class Metrilo_Woo_Analytics_Integration extends WC_Integration {
 		// fetch the order
 		$order = new WC_Order($order_id);
 
+		$call_params = false;
+
 		// identify user - put identify data in cookie
 		$this->identify_call_data = array(
 			'id'		=> get_post_meta($order_id, '_billing_email', true),
@@ -571,26 +555,17 @@ class Metrilo_Woo_Analytics_Integration extends WC_Integration {
 		);
 
 		// prepare the order data
-		$purchase_params = array(
-			'order_id' 			=> $order_id,
-			'order_type'		=> 'purchase',
-			'order_status'		=> $this->get_order_status($order),
-			'amount' 			=> $order->get_total(),
-			'shipping_amount' 	=> method_exists($order, 'get_total_shipping') ? $order->get_total_shipping() : $order->get_shipping(),
-			'tax_amount'		=> $order->get_total_tax(),
-			'items' 			=> array(),
-			'shipping_method'	=> $order->get_shipping_method(),
-			'payment_method'	=> $order->payment_method_title
-		);
+		$purchase_params = $this->prepare_order_params($order);
 
-		// check for multi currency
-		$purchase_params = $this->check_for_multi_currency($purchase_params);
-
-
-		$coupons_applied = $order->get_used_coupons();
-		if(count($coupons_applied) > 0){
-			$purchase_params['coupons'] = $coupons_applied;
+		// check if order has customer IP in it
+		$customer_ip = $this->get_order_ip($order_id);
+		if($customer_ip){
+			$call_params = array('use_ip' => $customer_ip);
 		}
+
+		// prepare the order time
+		$order_time_in_ms = get_post_time('U', true, $order_id) * 1000;
+
 
 		// add the items data to the order
 		$order_items = $order->get_items();
@@ -604,9 +579,14 @@ class Metrilo_Woo_Analytics_Integration extends WC_Integration {
 			array_push($purchase_params['items'], $product_hash);
 		}
 
+		// prepare order identity data
+		$identity_data = $this->prepare_order_identity_data($order);
+
+		// send backend call with the order
+		$this->send_api_call($identity_data['email'], 'order', $purchase_params, $identity_data, $order_time_in_ms, $call_params);
 		// put the order and identify data in cookies
 		$this->put_event_in_cookie_queue('track', 'order', $purchase_params);
-		$this->session_set($this->get_do_identify_cookie_name(), json_encode($this->identify_call_data, true));
+		$this->session_set($this->get_do_identify_cookie_name(), json_encode($this->identify_call_data));
 
 	}
 
@@ -626,24 +606,9 @@ class Metrilo_Woo_Analytics_Integration extends WC_Integration {
 		try {
 
 
-
-			$purchase_params = array(
-				'order_id' 					=> $order->id,
-				'order_type'				=> 'renewal',
-				'meta_source'				=> '_renewal',
-				'order_status'			=> $this->get_order_status($order),
-				'amount' 						=> $order->get_total(),
-				'shipping_amount' 	=> method_exists($order, 'get_total_shipping') ? $order->get_total_shipping() : $order->get_shipping(),
-				'tax_amount'				=> $order->get_total_tax(),
-				'items' 						=> array(),
-				'shipping_method'		=> $order->get_shipping_method(),
-				'payment_method'		=> $order->payment_method_title,
-				'subscription_id'		=> $original_order->id
-			);
-
-			// check for multi currency
-			$purchase_params = $this->check_for_multi_currency($purchase_params);
-
+			$purchase_params = $this->prepare_order_params($order);
+			$purchase_params['order_type'] = 'renewal';
+			$purchase_params['meta_source'] = '_renewal';
 
 			// prepare order identity data
 			$identity_data = $this->prepare_order_identity_data($order);
@@ -669,20 +634,7 @@ class Metrilo_Woo_Analytics_Integration extends WC_Integration {
 				$order = new WC_Order($order_id);
 
 				// prepare the order data
-				$purchase_params = array(
-					'order_id' 			=> $order_id,
-					'order_status' 		=> $this->get_order_status($order),
-					'amount' 			=> $order->get_total(),
-					'shipping_amount' 	=> method_exists($order, 'get_total_shipping') ? $order->get_total_shipping() : $order->get_shipping(),
-					'tax_amount'		=> $order->get_total_tax(),
-					'items' 			=> array(),
-					'shipping_method'	=> $order->get_shipping_method(),
-					'payment_method'	=> $order->payment_method_title
-				);
-
-				// check for multi currency
-				$purchase_params = $this->check_for_multi_currency($purchase_params);
-
+				$purchase_params = $this->prepare_order_params($order);
 				$call_params = false;
 
 				// check if order has customer IP in it
@@ -692,11 +644,6 @@ class Metrilo_Woo_Analytics_Integration extends WC_Integration {
 				}
 
 				$order_time_in_ms = get_post_time('U', true, $order_id) * 1000;
-
-				$coupons_applied = $order->get_used_coupons();
-				if(count($coupons_applied) > 0){
-					$purchase_params['coupons'] = $coupons_applied;
-				}
 
 				// add the items data to the order
 				$order_items = $order->get_items();
@@ -731,6 +678,59 @@ class Metrilo_Woo_Analytics_Integration extends WC_Integration {
 				return $order_object->status;
 			}
 		}
+	}
+
+	public function prepare_order_params($order){
+
+		// prepare basic order data
+		$purchase_params = array(
+			'order_id' 			  => $order->id,
+			'order_status' 		=> $this->get_order_status($order),
+			'amount' 			    => $order->get_total(),
+			'shipping_amount' => method_exists($order, 'get_total_shipping') ? $order->get_total_shipping() : $order->get_shipping(),
+			'tax_amount'		  => $order->get_total_tax(),
+			'items' 			    => array(),
+			'shipping_method'	=> $order->get_shipping_method(),
+			'payment_method'	=> $order->payment_method_title
+		);
+
+		// attach billing data to order
+		if(isset($order->billing_phone)){
+			$purchase_params['billing_phone'] = $order->billing_phone;
+		}
+		if(isset($order->billing_city)){
+			$purchase_params['billing_city'] = $order->billing_city;
+		}
+		if(isset($order->billing_state)){
+			$purchase_params['billing_region'] = $order->billing_state;
+		}
+		if(isset($order->billing_postcode)){
+			$purchase_params['billing_postcode'] = $order->billing_postcode;
+		}
+		if(isset($order->billing_country)){
+			$purchase_params['billing_country'] = $order->billing_country;
+		}
+		if(isset($order->billing_address_1)){
+			$purchase_params['billing_address_line_1'] = $order->billing_address_1;
+		}
+		if(isset($order->billing_address_2)){
+			$purchase_params['billing_address_line_2'] = $order->billing_address_2;
+		}
+		if(isset($order->billing_company)){
+			$purchase_params['billing_company'] = $order->billing_company;
+		}
+
+		// attach coupons data
+		$coupons_applied = $order->get_used_coupons();
+		if(count($coupons_applied) > 0){
+			$purchase_params['coupons'] = $coupons_applied;
+		}
+
+		// extra check for multicurrency websites
+		$purchase_params = $this->check_for_multi_currency($purchase_params);
+
+		return $purchase_params;
+
 	}
 
 	/**
@@ -818,27 +818,33 @@ class Metrilo_Woo_Analytics_Integration extends WC_Integration {
 		$items = $this->get_items_in_cookie();
 		if(empty($items)) $items = array();
 		array_push($items, $data);
-		$encoded_items = json_encode($items, true);
+		$encoded_items = json_encode($items);
 		$this->session_set($this->get_cookie_name(), $encoded_items);
 	}
 
 	public function get_items_in_cookie(){
 		$items = array();
 		$data = $this->session_get($this->get_cookie_name());
-		if(!empty($data)) $items = json_decode(stripslashes($data), true);
+		if(!empty($data)){
+			if(get_magic_quotes_gpc()) $data = stripslashes($data);
+			$items = json_decode($data, true);
+		}
 		return $items;
 	}
 
 	public function get_identify_data_in_cookie(){
 		$identify = array();
 		$data = $this->session_get($this->get_do_identify_cookie_name());
-		if(!empty($data)) $identify = json_decode(stripslashes($data), true);
+		if(!empty($data)){
+			if(get_magic_quotes_gpc()) $data = stripslashes($data);
+			$identify = json_decode($data, true);
+		}
 		return $identify;
 	}
 
 	public function clear_items_in_cookie(){
-		$this->session_set($this->get_cookie_name(), json_encode(array(), true));
-		$this->session_set($this->get_do_identify_cookie_name(), json_encode(array(), true));
+		$this->session_set($this->get_cookie_name(), json_encode(array()));
+		$this->session_set($this->get_do_identify_cookie_name(), json_encode(array()));
 	}
 
 	public function get_order_ip($order_id){
