@@ -1,34 +1,55 @@
-=== WooCommerce Intelligent Marketing & CRM by Metrilo ===
+=== WooCommerce Marketing Platform & CRM by Metrilo ===
 Contributors: MurryIvanoff
 Tags: woocommerce, analytics, reporting, tracking, woo, ecommerce, funnels, metrics, kissmetrics, mixpanel, crm, history, products, items, rjmetrics, analytics dashboard, google analytics, products, retention, coupons, customers, big data, customer relationship management, subscriptions, woocommerce subscriptions, churn, customer analytics, insights, ltv, email marketing, email, triggered emails, cohorts, sales analytics, customer intelligence, email marketing
 Requires at least: 2.9.2
-Tested up to: 4.5.3
+Tested up to: 4.6.1
 Stable Tag: 1.3.8
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
-Get to know your customers. Send highly targeted email campaigns. Measure your WooCommerce website. CRM for WooCommerce.
+Instant WooCommerce analytics, powerful CRM and personalized email marketing all in one place
 
 == Description ==
 
-Metrilo is simple, yet extremely powerful Customer Analytics, CRM and Email Marketing product that turns your WooCommerce data into insights to grow your business. Metrilo helps you know everything about your customers from their first touch with your WooCommerce store to their latest purchase
+Metrilo is powerful Customer Analytics, CRM and Email Marketing product that turns your WooCommerce data into insights to grow your business. Metrilo helps you know everything about your customers from their first touch with your WooCommerce store to their latest purchase
 
-* Have all your customer data in one place.
-* Identify cohorts of customers, cart abandoners or high-value spenders. Metrilo gets all your customer data in one place and makes it easy for you to get to know your biggest asset - your customers.
-* More repeat purchases, just a few clicks away. Send targeted email messages in 3 easy steps.
-* Metrilo tracks all important eCommerce metrics for you. Automatically.
-* Optimize your acquisition channels
-* Track product performance
-* Most powerful WooCommerce CRM on the market
-* Powerful intelligence for your sales team
-* With Metrilo, you have an amazing real-time overview of who's doing what on your eCommerce store.
-* Metrilo automatically collects and analyzes your eCommerce data to use for your email campaigns.
+= WooCommerce CRM =
+Meet the people behind your orders
+* Track everything visitors do - from first visit to latest order
+* Detailed customer profiles
+* Product interactions
+* Cart Abandonment
+* Customer segmentation based on behavior
+* Custom tags and notes
+* One-on-one marketing emails
+* Live view
 
-This plugin provides one-click integration with Metrilo's Analytics & CRM tracking API for WordPress online stores running on WooCommerce. Funnels, metrics, individual visitors and customers tracking. Measure marketing channels efficiency, products and categories performance and many more. Ask-Us-Anything support included with every free or paid plan. We're truly customer centric and it's our mission to turn Metrilo into your best friend to run your eCommerce business with.
+= WooCommerce Email Marketing =
+Powerful personalization engages better, fights cart abandonment and drives repeat sales.
+* Personalized e-mail marketing
+* Responsive emails composer
+* Powerful reporting on email performance
+* Custom domains + your branding only
+* E-mail automation (coming soon)
 
-Don't have Metrilo account yet? That's alright! [Sign up now for free](https://www.metrilo.com/signup?ref=wpplugin) and get UNLIMITED 14-day free trial.
+= WooCommerce Analytics =
+The full overview of your eCommerce business
+* In-depth revenue analysis
+* Acquisition sources report
+* Preset Sales Funnels
+* Order statuses updated in real time (and accounted for in revenue)
+* Products performance
+* Retention Analysis
+* CLV, AOV, Conversion Rates, and more metrics
 
-Need an eCommerce CRM? Metrilo provides you with profile for each one of your customers and information how they landed on your online store, all of their history actions, products and categories they're interested in and so on. Manage your most valuable asset in a way that wasn't possible before.
+
+This plugin lets you connect your WooCommerce store with Metrilo in less than 5 minutes. All tracking is real-time and reports are accurate to the minute.
+
+Metrilo is an all-in-one marketing product and runs on a self-standing platform so your website speed is not affected. You can create your account at [metrilo.com](https://www.metrilo.com/signup?ref=wpplugin)
+
+We provide Ask-Us-Anything support. You are more than welcome to get in touch with us anytime using the live-chat on our website.
+
+[Sign up now for free](https://www.metrilo.com/signup?ref=wpplugin) and get all-inclusive 14-day trial.
 
 Metrilo gets better every single day. We're excited to have you onboard!
 
