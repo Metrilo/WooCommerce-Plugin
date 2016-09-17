@@ -3,7 +3,7 @@ Contributors: MurryIvanoff
 Tags: woocommerce, analytics, reporting, tracking, woo, ecommerce, funnels, metrics, kissmetrics, mixpanel, crm, history, products, items, rjmetrics, analytics dashboard, google analytics, products, retention, coupons, customers, big data, customer relationship management, subscriptions, woocommerce subscriptions, churn, customer analytics, insights, ltv, email marketing, email, triggered emails, cohorts, sales analytics, customer intelligence, email marketing
 Requires at least: 2.9.2
 Tested up to: 4.6.1
-Stable Tag: 1.3.9
+Stable Tag: 1.3.91
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -15,6 +15,7 @@ Metrilo is powerful Customer Analytics, CRM and Email Marketing product that tur
 
 = WooCommerce CRM =
 Meet the people behind your orders
+
 * Track everything visitors do - from first visit to latest order
 * Detailed customer profiles
 * Product interactions
@@ -26,6 +27,7 @@ Meet the people behind your orders
 
 = WooCommerce Email Marketing =
 Powerful personalization engages better, fights cart abandonment and drives repeat sales.
+
 * Personalized e-mail marketing
 * Responsive emails composer
 * Powerful reporting on email performance
@@ -34,6 +36,7 @@ Powerful personalization engages better, fights cart abandonment and drives repe
 
 = WooCommerce Analytics =
 The full overview of your eCommerce business
+
 * In-depth revenue analysis
 * Acquisition sources report
 * Preset Sales Funnels
