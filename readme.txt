@@ -89,9 +89,11 @@ Absolutely! We offer a 14-day free trial on every plan. No obligation. No credit
 
 == Screenshots ==
 
-1. Simple funnels. Compare by any parameter, including marketing campaign, referral, device and etc.
-2. Visitors and customers profiles - your WooCommerce store's CRM. Filter people by any parameter or action
-3. Products performance - see top performing products and how are they connected to other products in your catalog
+1. Overview of your WooCommerce store's performance
+2. Easily filter a segment of your WooCommerce customer base
+3. Customer profiles with all their cross-device activities, orders and product interactions
+4. Analyze your revenue. Find growth opportunities!
+5. Easily build and send personalized responsive email campaigns
 
 == Changelog ==
 
