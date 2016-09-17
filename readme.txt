@@ -3,7 +3,7 @@ Contributors: MurryIvanoff
 Tags: woocommerce, analytics, reporting, tracking, woo, ecommerce, funnels, metrics, kissmetrics, mixpanel, crm, history, products, items, rjmetrics, analytics dashboard, google analytics, products, retention, coupons, customers, big data, customer relationship management, subscriptions, woocommerce subscriptions, churn, customer analytics, insights, ltv, email marketing, email, triggered emails, cohorts, sales analytics, customer intelligence, email marketing
 Requires at least: 2.9.2
 Tested up to: 4.6.1
-Stable Tag: 1.3.8
+Stable Tag: 1.3.9
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -65,17 +65,26 @@ Once you install the plugin, follow these steps:
 
 == Frequently Asked Questions ==
 
+= How does Metrilo actually work? =
+
+As soon as you install the plug-in, your data goes to our servers and Metrilo instantly starts processing. Every report / analysis or customer profile you see is generated in real time. You can access your account at [metrilo.com](https://www.metrilo.com/?ref=wpplugin)
+
 = Will it slow down my site? =
 
-Absolutely no. Metrilo's tracking library loads async and doesn't slow down your website at all.
+Not at all. Metrilo’s JavaScript tracking library loads asynchronously after each page has already been loaded. All API requests are sent in the background using our fast CDN-backed infrastructure that connects to the nearest node around the globe.
 
-= How long should I wait before I have enough data to trust and act on? =
+= Is my data secure? =
 
-It really depends on how many visitors do you have per day. It's a good idea to wait at least a few days.
+For our website, we use SSL protection that ensures secure login and billing payments. Goes without saying, we value you and understand your data needs protection – we make sure it’s safe with us and don’t share it with any third parties.
 
-= Can I try or use it for free? =
+= Is Metrilo real-time? =
 
-Absolutely! We offer a 14-day free trial on every plan. No obligation. No credit card required. [Get started for free](https://www.metrilo.com/signup?ref=wpplugin) now and get to know your WooCommerce customers!
+Metrilo is almost real-time. Some features require data aggregation that can take up to a few minutes before it shows up in your Metrilo account.
+
+= Is Metrilo real-time? =
+
+Absolutely! We offer a 14-day free trial on every plan. No obligation. No credit card required. Get started for free now and get to know your WooCommerce customers!
+
 
 
 == Screenshots ==
@@ -85,6 +94,9 @@ Absolutely! We offer a 14-day free trial on every plan. No obligation. No credit
 3. Products performance - see top performing products and how are they connected to other products in your catalog
 
 == Changelog ==
+
+= 1.3.9 =
+* Works with WordPress 4.6.1
 
 = 1.3.8 =
 * Improved: Integrate with Aelia Currency Switcher plugin
