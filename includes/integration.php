@@ -42,6 +42,7 @@ class Metrilo_Woo_Analytics_Integration extends WC_Integration {
 		$this->api_key = $this->get_option('api_key', false);
 		$this->api_secret = $this->get_option('api_secret', false);
 		$this->ignore_for_roles = $this->get_option('ignore_for_roles', false);
+		$this->product_brand_taxonomy = $this->get_option('product_brand_taxonomy', 'none');
 		$this->accept_tracking = true;
 
 		// previous version compatibility - fetch token from Wordpress settings
@@ -359,14 +360,24 @@ class Metrilo_Woo_Analytics_Integration extends WC_Integration {
 		if($image && $image->guid) $product_hash['image_url'] = $image->guid;
 
 		// fetch the categories
+		$categories_list = array();
 		$categories = wp_get_post_terms($product->id, 'product_cat');
 		if(!empty($categories)){
-			$categories_list = array();
 			foreach($categories as $cat){
 				array_push($categories_list, array('id' => $cat->term_id, 'name' => $cat->name));
 			}
-			if(!empty($categories_list)) $product_hash['categories'] = $categories_list;
 		}
+
+		// fetch brand taxonomy if available
+		if($this->product_brand_taxonomy != 'none'){
+			$brand_name = $product->get_attribute($this->product_brand_taxonomy);
+			if(!empty($brand_name)){
+				array_push($categories_list, array('id' => 'brand_'.$brand_name, 'name' => 'Brand: '.$brand_name));
+			}
+		}
+
+		// include list of categories if any
+		if(!empty($categories_list)) $product_hash['categories'] = $categories_list;
 
 		// return
 		return $product_hash;
@@ -955,6 +966,23 @@ class Metrilo_Woo_Analytics_Integration extends WC_Integration {
 				'options'			=> $possible_ignore_roles
 			);
 		}
+
+		$product_brand_taxonomy_options = array('none' => 'None');
+		foreach(wc_get_attribute_taxonomies() as $v){
+			$product_brand_taxonomy_options[$v->attribute_name] = $v->attribute_label;
+		}
+
+
+		$this->form_fields['product_brand_taxonomy'] = array(
+			'title'             => __( 'Product brand attribute', 'metrilo-woo-analytics' ),
+			'type'              => 'select',
+			'description'       => __( "If you check any of those attributes, it'll be synced with Metrilo as the product's brand" ),
+			'desc_tip'          => false,
+			'default'           => '',
+			'options'						=> $product_brand_taxonomy_options
+		);
+
+
 	}
 
 }
