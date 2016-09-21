@@ -6,7 +6,7 @@ if ( ! class_exists( 'Metrilo_Woo_Analytics_Integration' ) ) :
 class Metrilo_Woo_Analytics_Integration extends WC_Integration {
 
 
-	private $integration_version = '1.4.0';
+	private $integration_version = '1.4.1';
 	private $events_queue = array();
 	private $single_item_tracked = false;
 	private $has_events_in_cookie = false;
@@ -74,6 +74,9 @@ class Metrilo_Woo_Analytics_Integration extends WC_Integration {
 
 	public function on_woocommerce_init(){
 
+		// check if I should clear the events cookie queue
+		$this->check_for_metrilo_clear();
+
 		// check if API token and Secret are both entered
 		$this->check_for_keys();
 
@@ -133,8 +136,6 @@ class Metrilo_Woo_Analytics_Integration extends WC_Integration {
 		add_action('woocommerce_order_status_changed', array($this, 'order_status_changed'), 10);
 
 		// cookie clearing actions
-		add_action('wp_ajax_metrilo_clear', array($this, 'clear_cookie_events'));
-		add_action('wp_ajax_nopriv_metrilo_clear', array($this, 'clear_cookie_events'));
 		add_action('wp_ajax_metrilo_chunk_sync', array($this, 'sync_orders_chunk'));
 
 		add_action('admin_menu', array($this, 'setup_admin_pages'));
@@ -879,9 +880,11 @@ class Metrilo_Woo_Analytics_Integration extends WC_Integration {
 	}
 
 
-	public function clear_cookie_events(){
-		$this->clear_items_in_cookie();
-		wp_send_json_success();
+	public function check_for_metrilo_clear(){
+		if(!empty($_REQUEST) && !empty($_REQUEST['metrilo_clear'])){
+			$this->clear_items_in_cookie();
+			wp_send_json_success();
+		}
 	}
 
 	public function process_cookie_events(){

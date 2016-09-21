@@ -11,7 +11,7 @@
 <?php if ($this->has_events_in_cookie): ?>
 	<script type="text/javascript">
 	jQuery(document).ready(function($) {
-		$.post("<?php echo admin_url('admin-ajax.php'); ?>", {'action': 'metrilo_clear'}, function(response) {});
+		$.get("<?php echo add_query_arg('metrilo_clear', 1); ?>", function(response) {  });
 	});
 	</script>
 <?php endif; ?>
