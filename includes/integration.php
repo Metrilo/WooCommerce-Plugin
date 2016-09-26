@@ -6,7 +6,7 @@ if ( ! class_exists( 'Metrilo_Woo_Analytics_Integration' ) ) :
 class Metrilo_Woo_Analytics_Integration extends WC_Integration {
 
 
-	private $integration_version = '1.4.1';
+	private $integration_version = '1.4.2';
 	private $events_queue = array();
 	private $single_item_tracked = false;
 	private $has_events_in_cookie = false;
@@ -43,7 +43,7 @@ class Metrilo_Woo_Analytics_Integration extends WC_Integration {
 		$this->api_secret = $this->get_option('api_secret', false);
 		$this->ignore_for_roles = $this->get_option('ignore_for_roles', false);
 		$this->product_brand_taxonomy = $this->get_option('product_brand_taxonomy', 'none');
-		$this->send_roles_as_tags = $this->get_option('send_roles_as_tags', false);
+		$this->send_roles_as_tags = $this->get_option('send_roles_as_tags', 'no');
 		$this->accept_tracking = true;
 
 		// previous version compatibility - fetch token from Wordpress settings
@@ -233,6 +233,13 @@ class Metrilo_Woo_Analytics_Integration extends WC_Integration {
 						'email'						=> $order_user->data->user_email,
 						'name'						=> $order_user->data->display_name
 					);
+				}
+			}
+
+			if($this->send_roles_as_tags == 'yes'){
+				$order_user = $this->get_order_user($order);
+				if(!empty($order_user) && !empty($order_user->roles)){
+					$identity_data['tags'] = $order_user->roles;
 				}
 			}
 
