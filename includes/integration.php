@@ -43,6 +43,7 @@ class Metrilo_Woo_Analytics_Integration extends WC_Integration {
 		$this->api_secret = $this->get_option('api_secret', false);
 		$this->ignore_for_roles = $this->get_option('ignore_for_roles', false);
 		$this->product_brand_taxonomy = $this->get_option('product_brand_taxonomy', 'none');
+		$this->send_roles_as_tags = $this->get_option('send_roles_as_tags', false);
 		$this->accept_tracking = true;
 
 		// previous version compatibility - fetch token from Wordpress settings
@@ -259,6 +260,10 @@ class Metrilo_Woo_Analytics_Integration extends WC_Integration {
 			if($user->user_firstname!= '' && $user->user_lastname){
 				$this->identify_call_data['params']['first_name'] = $user->user_firstname;
 				$this->identify_call_data['params']['last_name'] = $user->user_lastname;
+			}
+			// check if roles should be sent and if they exist
+			if($this->send_roles_as_tags == 'yes' && !empty($user->roles)){
+				$this->identify_call_data['params']['tags'] = $user->roles;
 			}
 			$this->session_set($this->get_identify_cookie_name(), 'true');
 		}
@@ -984,6 +989,16 @@ class Metrilo_Woo_Analytics_Integration extends WC_Integration {
 			'default'           => '',
 			'options'						=> $product_brand_taxonomy_options
 		);
+
+		$this->form_fields['send_roles_as_tags'] = array(
+			'title'             => __( 'Send user roles as tags', 'metrilo-woo-analytics' ),
+			'type'              => 'checkbox',
+			'description'       => __( "If you check this, your user's roles will be sent to Metrilo as tags when they browse your website" ),
+			'desc_tip'          => false,
+			'label'							=> 'Send roles as tags',
+			'default'           => false
+		);
+
 
 
 	}
