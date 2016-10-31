@@ -6,7 +6,7 @@ if ( ! class_exists( 'Metrilo_Woo_Analytics_Integration' ) ) :
 class Metrilo_Woo_Analytics_Integration extends WC_Integration {
 
 
-	private $integration_version = '1.4.2';
+	private $integration_version = '1.4.4';
 	private $events_queue = array();
 	private $single_item_tracked = false;
 	private $has_events_in_cookie = false;
@@ -14,6 +14,7 @@ class Metrilo_Woo_Analytics_Integration extends WC_Integration {
 	private $woo = false;
 	private $orders_per_import_chunk = 25;
 	private $batch_calls_queue = array();
+  private $possible_events = array('view_product' => 'View Product', 'view_category' => 'View Category', 'view_article' => 'View Article', 'add_to_cart' => 'Add to cart', 'remove_from_cart' => 'Remove from cart', 'view_cart' => 'View Cart', 'checkout_start' => 'Started Checkout', 'identify' => 'Identify calls');
 
 
 	/**
@@ -42,6 +43,7 @@ class Metrilo_Woo_Analytics_Integration extends WC_Integration {
 		$this->api_key = $this->get_option('api_key', false);
 		$this->api_secret = $this->get_option('api_secret', false);
 		$this->ignore_for_roles = $this->get_option('ignore_for_roles', false);
+    $this->ignore_for_events = $this->get_option('ignore_for_events', false);
 		$this->product_brand_taxonomy = $this->get_option('product_brand_taxonomy', 'none');
 		$this->send_roles_as_tags = $this->get_option('send_roles_as_tags', 'no');
 		$this->accept_tracking = true;
@@ -405,6 +407,12 @@ class Metrilo_Woo_Analytics_Integration extends WC_Integration {
 	}
 
 	public function put_event_in_queue($method, $event = '', $params = array()){
+    if($this->check_if_event_should_be_ignored($method)){
+      return true;
+    }
+    if($this->check_if_event_should_be_ignored($event)){
+      return true;
+    }
 		array_push($this->events_queue, $this->prepare_event_for_queue($method, $event, $params));
 	}
 
@@ -423,6 +431,16 @@ class Metrilo_Woo_Analytics_Integration extends WC_Integration {
 		}
 
 	}
+
+  public function check_if_event_should_be_ignored($event){
+    if(empty($this->ignore_for_events)){
+      return false;
+    }
+    if(in_array($event, $this->ignore_for_events)){
+      return true;
+    }
+    return false;
+  }
 
 	private function clear_batch_call_queue(){
 		$this->batch_calls_queue = array();
@@ -658,7 +676,7 @@ class Metrilo_Woo_Analytics_Integration extends WC_Integration {
 				$order = new WC_Order($order_id);
 
 				// prepare the order data
-				$purchase_params = $this->prepare_order_params($order);
+				$purchase_params = $this->prepare_order_params($order, $new_status);
 				$call_params = false;
 
 				// check if order has customer IP in it
@@ -704,7 +722,7 @@ class Metrilo_Woo_Analytics_Integration extends WC_Integration {
 		}
 	}
 
-	public function prepare_order_params($order){
+	public function prepare_order_params($order, $order_status = false){
 
 		// prepare basic order data
 		$purchase_params = array(
@@ -717,6 +735,9 @@ class Metrilo_Woo_Analytics_Integration extends WC_Integration {
 			'shipping_method'	=> $order->get_shipping_method(),
 			'payment_method'	=> $order->payment_method_title
 		);
+    if(!empty($order_status)){
+      $purchase_params['order_status'] = $order_status;
+    }
 
 		// attach billing data to order
 		if(isset($order->billing_phone)){
@@ -963,9 +984,9 @@ class Metrilo_Woo_Analytics_Integration extends WC_Integration {
 				'default'           => ''
 			),
 			'api_secret' => array(
-				'title'             => __( 'API Secret Key <span style="color: green;">(new)</span>', 'metrilo-woo-analytics' ),
+				'title'             => __( 'API Secret Key', 'metrilo-woo-analytics' ),
 				'type'              => 'text',
-				'description'       => __( '<strong style="color: green;">Important:</strong> Enter your Metrilo API secret key to activate Subscriptions tracking and to be able to sync with Metrilo', 'metrilo-woo-analytics' ),
+				'description'       => __( 'Enter your Metrilo API secret key.', 'metrilo-woo-analytics' ),
 				'desc_tip'          => false,
 				'default'           => ''
 			)
@@ -981,6 +1002,16 @@ class Metrilo_Woo_Analytics_Integration extends WC_Integration {
 				'options'			=> $possible_ignore_roles
 			);
 		}
+    $this->form_fields['ignore_for_events'] = array(
+      'title'             => __( 'Do not send the selected tracking events', 'metrilo-woo-analytics' ),
+      'type'              => 'multiselect',
+      'description'       => __( 'Tracking won\'t be sent for the selected events', 'metrilo-woo-analytics' ),
+      'desc_tip'          => false,
+      'default'           => '',
+      'options'			=> $this->possible_events
+    );
+
+
 
 		$product_brand_taxonomy_options = array('none' => 'None');
 		foreach(wc_get_attribute_taxonomies() as $v){

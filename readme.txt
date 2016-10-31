@@ -3,7 +3,7 @@ Contributors: MurryIvanoff
 Tags: woocommerce, analytics, reporting, tracking, woo, ecommerce, funnels, metrics, kissmetrics, mixpanel, crm, history, products, items, rjmetrics, analytics dashboard, google analytics, products, retention, coupons, customers, big data, customer relationship management, subscriptions, woocommerce subscriptions, churn, customer analytics, insights, ltv, email marketing, email, triggered emails, cohorts, sales analytics, customer intelligence, email marketing
 Requires at least: 2.9.2
 Tested up to: 4.6.1
-Stable Tag: 1.4.2
+Stable Tag: 1.4.4
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -99,6 +99,12 @@ Absolutely! We offer a 14-day free trial on every plan. No obligation. No credit
 5. Easily build and send personalized responsive email campaigns
 
 == Changelog ==
+
+= 1.4.4 =
+* Improved: Order status change tracking improvement
+
+= 1.4.3 =
+* New: You can now choose which tracking events to not be sent to Metrilo
 
 = 1.4.2 =
 * New: You can now send your user's roles as tags to Metrilo
