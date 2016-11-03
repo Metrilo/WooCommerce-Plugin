@@ -6,7 +6,7 @@ if ( ! class_exists( 'Metrilo_Woo_Analytics_Integration' ) ) :
 class Metrilo_Woo_Analytics_Integration extends WC_Integration {
 
 
-	private $integration_version = '1.4.4';
+	private $integration_version = '1.4.5';
 	private $events_queue = array();
 	private $single_item_tracked = false;
 	private $has_events_in_cookie = false;
@@ -136,7 +136,7 @@ class Metrilo_Woo_Analytics_Integration extends WC_Integration {
 		add_action('woocommerce_subscriptions_renewal_order_created', array($this, 'new_subscription_order_event'), 10, 4);
 
 		// hook on WooCommerce order update
-		add_action('woocommerce_order_status_changed', array($this, 'order_status_changed'), 10);
+		add_action('woocommerce_order_status_changed', array($this, 'order_status_changed'), 10, 3);
 
 		// cookie clearing actions
 		add_action('wp_ajax_metrilo_chunk_sync', array($this, 'sync_orders_chunk'));
@@ -417,6 +417,12 @@ class Metrilo_Woo_Analytics_Integration extends WC_Integration {
 	}
 
 	public function put_event_in_cookie_queue($method, $event, $params){
+    if($this->check_if_event_should_be_ignored($method)){
+      return true;
+    }
+    if($this->check_if_event_should_be_ignored($event)){
+      return true;
+    }
 		$this->add_item_to_cookie($this->prepare_event_for_queue($method, $event, $params));
 	}
 
@@ -676,7 +682,7 @@ class Metrilo_Woo_Analytics_Integration extends WC_Integration {
 				$order = new WC_Order($order_id);
 
 				// prepare the order data
-				$purchase_params = $this->prepare_order_params($order, $new_status);
+				$purchase_params = $this->prepare_order_params($order, array('old_status' => $old_status, 'new_status' => $new_status));
 				$call_params = false;
 
 				// check if order has customer IP in it
@@ -722,7 +728,7 @@ class Metrilo_Woo_Analytics_Integration extends WC_Integration {
 		}
 	}
 
-	public function prepare_order_params($order, $order_status = false){
+	public function prepare_order_params($order, $order_merge_params = array()){
 
 		// prepare basic order data
 		$purchase_params = array(
@@ -735,8 +741,8 @@ class Metrilo_Woo_Analytics_Integration extends WC_Integration {
 			'shipping_method'	=> $order->get_shipping_method(),
 			'payment_method'	=> $order->payment_method_title
 		);
-    if(!empty($order_status)){
-      $purchase_params['order_status'] = $order_status;
+    if(!empty($order_merge_params)){
+      $purchase_params = array_merge($purchase_params, $order_merge_params);
     }
 
 		// attach billing data to order
