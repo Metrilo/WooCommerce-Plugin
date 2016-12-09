@@ -6,7 +6,7 @@ if ( ! class_exists( 'Metrilo_Woo_Analytics_Integration' ) ) :
 class Metrilo_Woo_Analytics_Integration extends WC_Integration {
 
 
-	private $integration_version = '1.4.5';
+	private $integration_version = '1.4.6';
 	private $events_queue = array();
 	private $single_item_tracked = false;
 	private $has_events_in_cookie = false;
@@ -46,6 +46,7 @@ class Metrilo_Woo_Analytics_Integration extends WC_Integration {
     $this->ignore_for_events = $this->get_option('ignore_for_events', false);
 		$this->product_brand_taxonomy = $this->get_option('product_brand_taxonomy', 'none');
 		$this->send_roles_as_tags = $this->get_option('send_roles_as_tags', 'no');
+    $this->http_or_https = $this->get_option('http_or_https', 'https') == 'https' ? 'https' : 'http';
 		$this->accept_tracking = true;
 
 		// previous version compatibility - fetch token from Wordpress settings
@@ -475,7 +476,7 @@ class Metrilo_Woo_Analytics_Integration extends WC_Integration {
 
 			// generate API call end point and call it
 			$end_point_params = array('s' => $signature, 'hs' => $based_call);
-			$c = wp_remote_post('http://p.metrilo.com/bt', array( 'body' => $end_point_params, 'timeout' => 15, 'blocking' => false ));
+			$c = wp_remote_post($this->http_or_https.'://p.metrilo.com/bt', array( 'body' => $end_point_params, 'timeout' => 15, 'blocking' => false ));
 
 		} catch (Exception $e){
 			return false;
@@ -530,7 +531,7 @@ class Metrilo_Woo_Analytics_Integration extends WC_Integration {
 
 			// generate API call end point and call it
 			$end_point_params = array('s' => $signature, 'hs' => $based_call);
-			$c = wp_remote_post('http://p.metrilo.com/t', array( 'body' => $end_point_params, 'timeout' => 15, 'blocking' => false ));
+			$c = wp_remote_post($this->http_or_https.'://p.metrilo.com/t', array( 'body' => $end_point_params, 'timeout' => 15, 'blocking' => false ));
 
 		} catch (Exception $e){
 
@@ -985,14 +986,14 @@ class Metrilo_Woo_Analytics_Integration extends WC_Integration {
 			'api_key' => array(
 				'title'             => __( 'API Token', 'metrilo-woo-analytics' ),
 				'type'              => 'text',
-				'description'       => __( 'Enter your Metrilo API token. You can find it under "Settings" in your Metrilo account.<br /> Don\'t have one? <a href="https://www.metrilo.com/signup?ref=woointegration" target="_blank">Sign-up for free</a> now, it only takes a few seconds.', 'metrilo-woo-analytics' ),
+				'description'       => __( '<strong style="color: green;">(Required)</strong> Enter your Metrilo API token. You can find it under "Settings" in your Metrilo account.<br /> Don\'t have one? <a href="https://www.metrilo.com/signup?ref=woointegration" target="_blank">Sign-up for free</a> now, it only takes a few seconds.', 'metrilo-woo-analytics' ),
 				'desc_tip'          => false,
 				'default'           => ''
 			),
 			'api_secret' => array(
 				'title'             => __( 'API Secret Key', 'metrilo-woo-analytics' ),
 				'type'              => 'text',
-				'description'       => __( 'Enter your Metrilo API secret key.', 'metrilo-woo-analytics' ),
+				'description'       => __( '<strong style="color: green;">(Required)</strong> Enter your Metrilo API secret key.', 'metrilo-woo-analytics' ),
 				'desc_tip'          => false,
 				'default'           => ''
 			)
@@ -1002,7 +1003,7 @@ class Metrilo_Woo_Analytics_Integration extends WC_Integration {
 			$this->form_fields['ignore_for_roles'] = array(
 				'title'             => __( 'Ignore tracking for roles', 'metrilo-woo-analytics' ),
 				'type'              => 'multiselect',
-				'description'       => __( 'If you check any of the roles, tracking data will be ignored for WP users with this role', 'metrilo-woo-analytics' ),
+				'description'       => __( '<strong style="color: #999;">(Optional)</strong> If you check any of the roles, tracking data will be ignored for WP users with this role', 'metrilo-woo-analytics' ),
 				'desc_tip'          => false,
 				'default'           => '',
 				'options'			=> $possible_ignore_roles
@@ -1011,7 +1012,7 @@ class Metrilo_Woo_Analytics_Integration extends WC_Integration {
     $this->form_fields['ignore_for_events'] = array(
       'title'             => __( 'Do not send the selected tracking events', 'metrilo-woo-analytics' ),
       'type'              => 'multiselect',
-      'description'       => __( 'Tracking won\'t be sent for the selected events', 'metrilo-woo-analytics' ),
+      'description'       => __( '<strong style="color: #999;">(Optional)</strong> Tracking won\'t be sent for the selected events', 'metrilo-woo-analytics' ),
       'desc_tip'          => false,
       'default'           => '',
       'options'			=> $this->possible_events
@@ -1028,7 +1029,7 @@ class Metrilo_Woo_Analytics_Integration extends WC_Integration {
 		$this->form_fields['product_brand_taxonomy'] = array(
 			'title'             => __( 'Product brand attribute', 'metrilo-woo-analytics' ),
 			'type'              => 'select',
-			'description'       => __( "If you check any of those attributes, it'll be synced with Metrilo as the product's brand" ),
+			'description'       => __( '<strong style="color: #999;">(Optional)</strong> If you check any of those attributes, it\'ll be synced with Metrilo as the product\'s brand' ),
 			'desc_tip'          => false,
 			'default'           => '',
 			'options'						=> $product_brand_taxonomy_options
@@ -1037,12 +1038,20 @@ class Metrilo_Woo_Analytics_Integration extends WC_Integration {
 		$this->form_fields['send_roles_as_tags'] = array(
 			'title'             => __( 'Send user roles as tags', 'metrilo-woo-analytics' ),
 			'type'              => 'checkbox',
-			'description'       => __( "If you check this, your user's roles will be sent to Metrilo as tags when they browse your website" ),
+			'description'       => __( '<strong style="color: #999;">(Optional)</strong> If you check this, your user\'s roles will be sent to Metrilo as tags when they browse your website' ),
 			'desc_tip'          => false,
 			'label'							=> 'Send roles as tags',
 			'default'           => false
 		);
 
+    $this->form_fields['http_or_https'] = array(
+			'title'             => __( 'Sync data to Metrilo with HTTPS', 'metrilo-woo-analytics' ),
+			'type'              => 'select',
+			'description'       => __( '<strong style="color: #999;">(Optional)</strong> Set if data should be sent to Metrilo from your WooCommerce backend through HTTPS or HTTP' ),
+			'desc_tip'          => false,
+			'default'           => '',
+			'options'						=> array('https' => 'Yes (HTTPS)', 'http' => 'No (HTTP)')
+		);
 
 
 	}
