@@ -1,6 +1,6 @@
 <div class="welcome-panel">
-	<div style="float: left; width: 120px; text-align: center;">
-		<img src="https://www.metrilo.com/assets/invoice_logo.png" />
+	<div style="float: left; width: 120px; text-align: center; padding-top: 30px;">
+		<img src="https://cdn.metrilo.com/logo-m.png" />
 	</div>
 	<div style="float: left;">
 	<h3>Importing your orders and customers to Metrilo</h3>

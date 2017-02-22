@@ -6,15 +6,17 @@ if ( ! class_exists( 'Metrilo_Woo_Analytics_Integration' ) ) :
 class Metrilo_Woo_Analytics_Integration extends WC_Integration {
 
 
-	private $integration_version = '1.4.6';
+	private $integration_version = '1.5.0';
 	private $events_queue = array();
 	private $single_item_tracked = false;
 	private $has_events_in_cookie = false;
 	private $identify_call_data = false;
 	private $woo = false;
 	private $orders_per_import_chunk = 25;
+  private $recent_orders_sync_days = 7;
 	private $batch_calls_queue = array();
   private $possible_events = array('view_product' => 'View Product', 'view_category' => 'View Category', 'view_article' => 'View Article', 'add_to_cart' => 'Add to cart', 'remove_from_cart' => 'Remove from cart', 'view_cart' => 'View Cart', 'checkout_start' => 'Started Checkout', 'identify' => 'Identify calls');
+  private $endpoint_domain = 'p.metrilo.com';
 
 
 	/**
@@ -62,11 +64,116 @@ class Metrilo_Woo_Analytics_Integration extends WC_Integration {
 
 		// initiate woocommerce hooks and activities
 		add_action('woocommerce_init', array($this, 'on_woocommerce_init'));
+    add_action('template_redirect', array($this, 'metrilo_endpoint_handler'));
 
 		// hook to integration settings update
 		add_action( 'woocommerce_update_options_integration_' .  $this->id, array($this, 'process_admin_options'));
 
 	}
+
+  public function addResponseHeader($die_with_message = false){
+    if($die_with_message){
+      header('X-Metrilo-Endpoint-Message: ' . $die_with_message);
+      die();
+    }else{
+      header('X-Metrilo-Endpoint-Version: ' . $this->integration_version);
+    }
+  }
+
+  public function metrilo_endpoint_handler(){
+    global $wp_query;
+    $metrilo_endpoint = $wp_query->get('metrilo_endpoint');
+    $req_id = $wp_query->get('req_id');
+    if ( ! $metrilo_endpoint ) {
+      return;
+    }
+    $this->addResponseHeader();
+    $this->validate_endpoint_request_id($req_id, $metrilo_endpoint);
+    $endpoint_response = array('endpoint' => $metrilo_endpoint);
+    switch($metrilo_endpoint){
+      case 'sync':
+        $days_sync = $wp_query->get('recent_orders_sync_days') ? (int)$wp_query->get('recent_orders_sync_days') : $this->recent_orders_sync_days;
+        $this->recent_orders_sync($days_sync);
+        break;
+      case 'orders':
+        $order_ids = explode(',', $wp_query->get('metrilo_order_ids'));
+        $this->sync_orders_chunk($order_ids);
+        break;
+    }
+
+    # expire this request
+    $this->expire_endpoint_request_id($req_id, $metrilo_endpoint);
+    wp_send_json(array('status' => 1, 'endpoint' => $metrilo_endpoint));
+  }
+
+  public function validate_endpoint_request_id($req_id, $endpoint){
+    if(empty($req_id)){
+      $this->addResponseHeader('No request ID specified');
+    }
+    $end_point_params = array('req_id' => $req_id, 'endpoint' => $endpoint, 'token' => $this->api_key);
+    $response = wp_remote_post($this->http_or_https.'://'.$this->endpoint_domain.'/r', array( 'body' => $end_point_params, 'timeout' => 15, 'blocking' => true ));
+    $response = json_decode($response['body']);
+    if($response->status != 1){
+      $this->addResponseHeader('Request ID is invalid');
+    }
+  }
+
+  public function expire_endpoint_request_id($req_id, $endpoint){
+    $end_point_params = array('req_id' => $req_id, 'endpoint' => $endpoint, 'token' => $this->api_key);
+    $response = wp_remote_post($this->http_or_https.'://'.$this->endpoint_domain.'/er', array( 'body' => $end_point_params, 'timeout' => 15, 'blocking' => true ));
+  }
+
+  public function recent_orders_sync($days_sync){
+    global $wpdb;
+    $recent_orders = array();
+    // do not accept more than 45 days
+    if($days_sync > 45) $days_sync = 45;
+
+    // prepare query
+    $date_after = date('Y-m-d', strtotime("-{$days_sync} days"));
+    $query = "select id from {$wpdb->posts} where (post_type = 'shop_order') && (post_date >= '{$date_after}') order by id desc";
+
+    // fetch orders and prepare the order-status hash
+    $order_ids = $wpdb->get_col($query);
+    if(!empty($order_ids)){
+      foreach($order_ids as $order_id){
+        try {
+          $order = new WC_Order($order_id);
+          if(!empty($order) && !empty($order->id)){
+            $order_id = (string)$order->id;
+            $recent_orders[$order_id] = $this->get_order_status($order);
+          }
+        }catch(Exception $e){
+
+				}
+      }
+    }
+
+
+    // send the order statuses to the Metrilo endpoint
+		try {
+
+			$call = array(
+        'uid'       => 'integration',
+        'token'     => $this->api_key,
+        'statuses'  => $recent_orders
+      );
+
+			// sort for salting and prepare base64
+			ksort($call);
+			$based_call = base64_encode(json_encode($call));
+			$signature = md5($based_call.$this->api_secret);
+
+			// generate API call end point and call it
+			$end_point_params = array('s' => $signature, 'hs' => $based_call);
+			$c = wp_remote_post($this->http_or_https.'://'.$this->endpoint_domain.'/s', array( 'body' => $end_point_params, 'timeout' => 15, 'blocking' => true ));
+
+		} catch (Exception $e){
+
+		}
+
+    return $recent_orders;
+  }
 
 	public function ensure_uid(){
 		$this->cbuid = $this->session_get('ensure_cbuid');
@@ -161,17 +268,21 @@ class Metrilo_Woo_Analytics_Integration extends WC_Integration {
 		$metrilo_import->output();
 	}
 
-	public function sync_orders_chunk(){
+	public function sync_orders_chunk($specific_order_ids = false){
 		global $wpdb;
 
-		$order_ids = false;
-		if(isset($_REQUEST['chunk_page'])){
-			$chunk_page = (int)$_REQUEST['chunk_page'];
-			$chunk_offset = $chunk_page * $this->orders_per_import_chunk;
+    if(!$specific_order_ids){
+  		$order_ids = false;
+  		if(isset($_REQUEST['chunk_page'])){
+  			$chunk_page = (int)$_REQUEST['chunk_page'];
+  			$chunk_offset = $chunk_page * $this->orders_per_import_chunk;
 
-			// fetch order IDs
-			$order_ids = $wpdb->get_col("select id from {$wpdb->posts} where post_type = 'shop_order' order by id asc limit {$this->orders_per_import_chunk} offset {$chunk_offset}");
-		}
+  			// fetch order IDs
+  			$order_ids = $wpdb->get_col("select id from {$wpdb->posts} where post_type = 'shop_order' order by id asc limit {$this->orders_per_import_chunk} offset {$chunk_offset}");
+  		}
+    }else{
+      $order_ids = $specific_order_ids;
+    }
 		if(!empty($order_ids)){
 			foreach($order_ids as $order_id){
 
@@ -476,7 +587,7 @@ class Metrilo_Woo_Analytics_Integration extends WC_Integration {
 
 			// generate API call end point and call it
 			$end_point_params = array('s' => $signature, 'hs' => $based_call);
-			$c = wp_remote_post($this->http_or_https.'://p.metrilo.com/bt', array( 'body' => $end_point_params, 'timeout' => 15, 'blocking' => false ));
+			$c = wp_remote_post($this->http_or_https.'://'.$this->endpoint_domain.'/bt', array( 'body' => $end_point_params, 'timeout' => 15, 'blocking' => false ));
 
 		} catch (Exception $e){
 			return false;
@@ -531,7 +642,7 @@ class Metrilo_Woo_Analytics_Integration extends WC_Integration {
 
 			// generate API call end point and call it
 			$end_point_params = array('s' => $signature, 'hs' => $based_call);
-			$c = wp_remote_post($this->http_or_https.'://p.metrilo.com/t', array( 'body' => $end_point_params, 'timeout' => 15, 'blocking' => false ));
+			$c = wp_remote_post($this->http_or_https.'://'.$this->endpoint_domain.'/t', array( 'body' => $end_point_params, 'timeout' => 15, 'blocking' => false ));
 
 		} catch (Exception $e){
 
