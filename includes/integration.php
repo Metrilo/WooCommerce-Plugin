@@ -6,7 +6,7 @@ if ( ! class_exists( 'Metrilo_Woo_Analytics_Integration' ) ) :
 class Metrilo_Woo_Analytics_Integration extends WC_Integration {
 
 
-	private $integration_version = '1.5.0';
+	private $integration_version = '1.5.1';
 	private $events_queue = array();
 	private $single_item_tracked = false;
 	private $has_events_in_cookie = false;
@@ -292,6 +292,7 @@ class Metrilo_Woo_Analytics_Integration extends WC_Integration {
 
 						// prepare the order data
 						$purchase_params = $this->prepare_order_params($order);
+            $purchase_params['context'] = 'import';
 						$purchase_params['order_type'] = 'import';
 						$call_params = false;
 
@@ -716,6 +717,7 @@ class Metrilo_Woo_Analytics_Integration extends WC_Integration {
 
 		// prepare the order data
 		$purchase_params = $this->prepare_order_params($order);
+    $purchase_params['context'] = 'new';
 
 		// check if order has customer IP in it
 		$customer_ip = $this->get_order_ip($order_id);
@@ -742,8 +744,11 @@ class Metrilo_Woo_Analytics_Integration extends WC_Integration {
 		// prepare order identity data
 		$identity_data = $this->prepare_order_identity_data($order);
 
+    // if cbuid is present, use it isntead of the order email when placing the order
+    $uid = (isset($_COOKIE) && isset($_COOKIE['cbuid'])) ? $_COOKIE['cbuid'] : $identity_data['email'];
+
 		// send backend call with the order
-		$this->send_api_call($identity_data['email'], 'order', $purchase_params, $identity_data, $order_time_in_ms, $call_params);
+		$this->send_api_call($uid, 'order', $purchase_params, $identity_data, $order_time_in_ms, $call_params);
 		// put the order and identify data in cookies
 		$this->put_event_in_cookie_queue('track', 'order', $purchase_params);
 		$this->session_set($this->get_do_identify_cookie_name(), json_encode($this->identify_call_data));
@@ -767,6 +772,7 @@ class Metrilo_Woo_Analytics_Integration extends WC_Integration {
 
 
 			$purchase_params = $this->prepare_order_params($order);
+      $purchase_params['context'] = 'renewal';
 			$purchase_params['order_type'] = 'renewal';
 			$purchase_params['meta_source'] = '_renewal';
 
@@ -795,7 +801,8 @@ class Metrilo_Woo_Analytics_Integration extends WC_Integration {
 
 				// prepare the order data
 				$purchase_params = $this->prepare_order_params($order, array('old_status' => $old_status, 'new_status' => $new_status));
-				$call_params = false;
+        $purchase_params['context'] = 'status_change';
+        $call_params = false;
 
 				// check if order has customer IP in it
 				$customer_ip = $this->get_order_ip($order_id);
