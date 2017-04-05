@@ -6,7 +6,7 @@ if ( ! class_exists( 'Metrilo_Woo_Analytics_Integration' ) ) :
 class Metrilo_Woo_Analytics_Integration extends WC_Integration {
 
 
-	private $integration_version = '1.5.1';
+	private $integration_version = '1.6.0';
 	private $events_queue = array();
 	private $single_item_tracked = false;
 	private $has_events_in_cookie = false;
@@ -750,7 +750,6 @@ class Metrilo_Woo_Analytics_Integration extends WC_Integration {
 		// send backend call with the order
 		$this->send_api_call($uid, 'order', $purchase_params, $identity_data, $order_time_in_ms, $call_params);
 		// put the order and identify data in cookies
-		$this->put_event_in_cookie_queue('track', 'order', $purchase_params);
 		$this->session_set($this->get_do_identify_cookie_name(), json_encode($this->identify_call_data));
 
 	}
@@ -1050,13 +1049,6 @@ class Metrilo_Woo_Analytics_Integration extends WC_Integration {
 		if(count($items) > 0){
 			$this->has_events_in_cookie = true;
 			foreach($items as $event){
-				// if we need to send order event, make sure the order status is up to date
-				if($event['method'] == 'track' && $event['event'] == 'order'){
-          $order = new WC_Order($event['params']['order_id']);
-          if($order){
-          	$event['params']['order_status'] = $this->get_order_status($order);
-          }
-				}
 				// put event in queue for sending to the JS library
 				$this->put_event_in_queue($event['method'], $event['event'], $event['params']);
 			}
