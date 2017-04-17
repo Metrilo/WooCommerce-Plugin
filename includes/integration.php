@@ -6,7 +6,7 @@ if ( ! class_exists( 'Metrilo_Woo_Analytics_Integration' ) ) :
 class Metrilo_Woo_Analytics_Integration extends WC_Integration {
 
 
-	private $integration_version = '1.6.0';
+	private $integration_version = '1.6.1';
 	private $events_queue = array();
 	private $single_item_tracked = false;
 	private $has_events_in_cookie = false;
@@ -48,6 +48,7 @@ class Metrilo_Woo_Analytics_Integration extends WC_Integration {
     $this->ignore_for_events = $this->get_option('ignore_for_events', false);
 		$this->product_brand_taxonomy = $this->get_option('product_brand_taxonomy', 'none');
 		$this->send_roles_as_tags = $this->get_option('send_roles_as_tags', 'no');
+    $this->add_tag_to_every_customer = $this->get_option('add_tag_to_every_customer', '');
     $this->http_or_https = $this->get_option('http_or_https', 'https') == 'https' ? 'https' : 'http';
 		$this->accept_tracking = true;
 
@@ -358,9 +359,24 @@ class Metrilo_Woo_Analytics_Integration extends WC_Integration {
 				}
 			}
 
+      if(!empty($this->add_tag_to_every_customer)){
+        if(empty($identity_data['tags'])){
+          $identity_data['tags'] = array();
+        }
+        array_push($identity_data['tags'], $this->add_tag_to_every_customer);
+      }
+
 			return $identity_data;
 
 	}
+
+  public function resolve_product($product_id){
+    if(function_exists('wc_get_product')){
+      return wc_get_product($product_id);
+    }else{
+      return get_product($product_id);
+    }
+  }
 
 	public function get_order_user($order){
 		if($order->user_id){
@@ -409,7 +425,7 @@ class Metrilo_Woo_Analytics_Integration extends WC_Integration {
 
 			// if visitor is viewing product
 			if(!$this->single_item_tracked && is_product()){
-				$product = get_product(get_queried_object_id());
+				$product = $this->resolve_product(get_queried_object_id());
 				$this->put_event_in_queue('track', 'view_product', $this->prepare_product_hash($product));
 				$this->single_item_tracked = true;
 			}
@@ -469,11 +485,12 @@ class Metrilo_Woo_Analytics_Integration extends WC_Integration {
 	}
 
 	public function prepare_product_hash($product, $variation_id = false, $variation = false){
+    $product_id = method_exists($product, 'get_id') ? $product->get_id() : $product->id;
 		$product_hash = array(
-			'id'			=> $product->id,
+			'id'			=> $product_id,
 			'name'			=> $product->get_title(),
 			'price'			=> $product->get_price(),
-			'url'			=> get_permalink($product->id)
+			'url'			=> get_permalink($product_id)
 		);
 
 		if($variation_id){
@@ -483,13 +500,13 @@ class Metrilo_Woo_Analytics_Integration extends WC_Integration {
 			$product_hash['option_price'] = $variation_data['price'];
 		}
 		// fetch image URL
-		$image_id = get_post_thumbnail_id($product->id);
+		$image_id = get_post_thumbnail_id($product_id);
 		$image = get_post($image_id);
 		if($image && $image->guid) $product_hash['image_url'] = $image->guid;
 
 		// fetch the categories
 		$categories_list = array();
-		$categories = wp_get_post_terms($product->id, 'product_cat');
+		$categories = wp_get_post_terms($product_id, 'product_cat');
 		if(!empty($categories)){
 			foreach($categories as $cat){
 				array_push($categories_list, array('id' => $cat->term_id, 'name' => $cat->name));
@@ -652,7 +669,7 @@ class Metrilo_Woo_Analytics_Integration extends WC_Integration {
 	}
 
 	public function add_to_cart($cart_item_key, $product_id, $quantity, $variation_id = false, $variation = false, $cart_item_data = false){
-		$product = get_product($product_id);
+		$product = $this->resolve_product($product_id);
 		$this->put_event_in_cookie_queue('track', 'add_to_cart', $this->prepare_product_hash($product, $variation_id, $variation));
 		$items = $this->get_items_in_cookie();
 	}
@@ -779,7 +796,7 @@ class Metrilo_Woo_Analytics_Integration extends WC_Integration {
 			$identity_data = $this->prepare_order_identity_data($order);
 
 			// prepare product data
-			$product = get_product($product_id);
+			$product = $this->resolve_product($product_id);
 			$product_data = $this->prepare_product_hash($product);
 			$product_data['quantity'] = 1;
 
@@ -1152,6 +1169,15 @@ class Metrilo_Woo_Analytics_Integration extends WC_Integration {
 			'desc_tip'          => false,
 			'label'							=> 'Send roles as tags',
 			'default'           => false
+		);
+
+    $this->form_fields['add_tag_to_every_customer'] = array(
+			'title'             => __( 'Add this tag to every customer', 'metrilo-woo-analytics' ),
+			'type'              => 'text',
+			'description'       => __( '<strong style="color: #999;">(Optional)</strong> If you enter tag, it will be added to every customer synced with Metrilo' ),
+			'desc_tip'          => false,
+			'label'							=> 'Add this tag to every customer in Metrilo',
+			'default'           => ''
 		);
 
     $this->form_fields['http_or_https'] = array(
