@@ -6,7 +6,7 @@ if ( ! class_exists( 'Metrilo_Woo_Analytics_Integration' ) ) :
 class Metrilo_Woo_Analytics_Integration extends WC_Integration {
 
 
-	private $integration_version = '1.6.1';
+	private $integration_version = '1.6.2';
 	private $events_queue = array();
 	private $single_item_tracked = false;
 	private $has_events_in_cookie = false;
@@ -49,6 +49,7 @@ class Metrilo_Woo_Analytics_Integration extends WC_Integration {
 		$this->product_brand_taxonomy = $this->get_option('product_brand_taxonomy', 'none');
 		$this->send_roles_as_tags = $this->get_option('send_roles_as_tags', 'no');
     $this->add_tag_to_every_customer = $this->get_option('add_tag_to_every_customer', '');
+    $this->prefix_order_ids = $this->get_option('prefix_order_ids', '');
     $this->http_or_https = $this->get_option('http_or_https', 'https') == 'https' ? 'https' : 'http';
 		$this->accept_tracking = true;
 
@@ -880,6 +881,11 @@ class Metrilo_Woo_Analytics_Integration extends WC_Integration {
       $purchase_params = array_merge($purchase_params, $order_merge_params);
     }
 
+    // check if order ID should be prefixed
+    if(!empty($this->prefix_order_ids)){
+      $purchase_params['order_id'] = $this->prefix_order_ids . (string)$purchase_params['order_id'];
+    }
+
 		// attach billing data to order
 		if(isset($order->billing_phone)){
 			$purchase_params['billing_phone'] = $order->billing_phone;
@@ -1177,6 +1183,15 @@ class Metrilo_Woo_Analytics_Integration extends WC_Integration {
 			'description'       => __( '<strong style="color: #999;">(Optional)</strong> If you enter tag, it will be added to every customer synced with Metrilo' ),
 			'desc_tip'          => false,
 			'label'							=> 'Add this tag to every customer in Metrilo',
+			'default'           => ''
+		);
+
+    $this->form_fields['prefix_order_ids'] = array(
+			'title'             => __( 'Prefix order IDs with', 'metrilo-woo-analytics' ),
+			'type'              => 'text',
+			'description'       => __( '<strong style="color: #999;">(Optional)</strong> If you enter a prefix, all your order IDs will be prefixed with it. Useful for multiple stores connected to one Metrilo account' ),
+			'desc_tip'          => false,
+			'label'							=> 'Prefix all your order IDs',
 			'default'           => ''
 		);
 
