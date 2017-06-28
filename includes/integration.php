@@ -6,7 +6,7 @@ if ( ! class_exists( 'Metrilo_Woo_Analytics_Integration' ) ) :
 class Metrilo_Woo_Analytics_Integration extends WC_Integration {
 
 
-	private $integration_version = '1.6.2';
+	private $integration_version = '1.6.3';
 	private $events_queue = array();
 	private $single_item_tracked = false;
 	private $has_events_in_cookie = false;
@@ -234,6 +234,7 @@ class Metrilo_Woo_Analytics_Integration extends WC_Integration {
 		// general tracking snipper hook
 		add_filter('wp_head', array($this, 'render_snippet'));
 		add_filter('wp_head', array($this, 'woocommerce_tracking'));
+    add_filter('wp_footer', array($this, 'woocommerce_footer_tracking'));
 
 		// background events tracking
 		add_action('woocommerce_add_to_cart', array($this, 'add_to_cart'), 10, 6);
@@ -485,6 +486,11 @@ class Metrilo_Woo_Analytics_Integration extends WC_Integration {
 		if($this->identify_call_data !== false) $this->render_identify();
 		if(count($this->events_queue) > 0) $this->render_events();
 	}
+
+
+  public function woocommerce_footer_tracking(){
+    if(count($this->events_queue) > 0) $this->render_footer_events();
+  }
 
 	public function prepare_product_hash($product, $variation_id = false, $variation = false){
     $product_id = method_exists($product, 'get_id') ? $product->get_id() : $product->id;
@@ -958,6 +964,10 @@ class Metrilo_Woo_Analytics_Integration extends WC_Integration {
 
 	public function render_events(){
 		include_once(METRILO_PLUGIN_PATH.'/render_tracking_events.php');
+	}
+
+  public function render_footer_events(){
+		include_once(METRILO_PLUGIN_PATH.'/render_footer_tracking_events.php');
 	}
 
 	public function render_identify(){
