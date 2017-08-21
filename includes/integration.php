@@ -6,7 +6,7 @@ if ( ! class_exists( 'Metrilo_Woo_Analytics_Integration' ) ) :
 class Metrilo_Woo_Analytics_Integration extends WC_Integration {
 
 
-	private $integration_version = '1.6.3';
+	private $integration_version = '1.7.0';
 	private $events_queue = array();
 	private $single_item_tracked = false;
 	private $has_events_in_cookie = false;
@@ -292,7 +292,7 @@ class Metrilo_Woo_Analytics_Integration extends WC_Integration {
 
 				try {
 					$order = new WC_Order($order_id);
-					if(!empty($order) && !empty($order->id)){
+					if(!empty($order) && !empty($this->object_property($order, 'order', 'id'))){
 
 						// prepare the order data
 						$purchase_params = $this->prepare_order_params($order);
@@ -339,10 +339,10 @@ class Metrilo_Woo_Analytics_Integration extends WC_Integration {
 
 	public function prepare_order_identity_data($order){
 			$identity_data = array(
-						'email' 		=> get_post_meta($order->id, '_billing_email', true),
-						'first_name' 	=> get_post_meta($order->id, '_billing_first_name', true),
-						'last_name' 	=> get_post_meta($order->id, '_billing_last_name', true),
-						'name'			=> get_post_meta($order->id, '_billing_first_name', true) . ' ' . get_post_meta($order->id, '_billing_last_name', true),
+						'email' 		=> get_post_meta($this->object_property($order, 'order', 'id'), '_billing_email', true),
+						'first_name' 	=> get_post_meta($this->object_property($order, 'order', 'id'), '_billing_first_name', true),
+						'last_name' 	=> get_post_meta($this->object_property($order, 'order', 'id'), '_billing_last_name', true),
+						'name'			=> get_post_meta($this->object_property($order, 'order', 'id'), '_billing_first_name', true) . ' ' . get_post_meta($this->object_property($order, 'order', 'id'), '_billing_last_name', true),
 			);
 
 			if(empty($identity_data['email'])){
@@ -382,8 +382,8 @@ class Metrilo_Woo_Analytics_Integration extends WC_Integration {
   }
 
 	public function get_order_user($order){
-		if($order->user_id){
-			$order_user = get_user_by('id', $order->user_id);
+		if($this->object_property($order, 'order', 'user_id')){
+			$order_user = get_user_by('id', $this->object_property($order, 'order', 'user_id'));
 			return $order_user;
 		}
 		return false;
@@ -712,7 +712,7 @@ class Metrilo_Woo_Analytics_Integration extends WC_Integration {
 
 		// get variation price from object
 		$variation_obj = new WC_Product_Variation($variation_id);
-		$variation_data['price'] = $variation_obj->price;
+		$variation_data['price'] = $this->object_property($variation_obj, 'variation', 'price');
 
 		// return
 		return $variation_data;
@@ -781,7 +781,6 @@ class Metrilo_Woo_Analytics_Integration extends WC_Integration {
 
 	public function check_for_multi_currency($purchase_params){
 		if(class_exists('Aelia_Order')){
-
 			$aelia_order = new Aelia_Order($purchase_params['order_id']);
 			$purchase_params['amount'] =  method_exists($aelia_order, 'get_total_in_base_currency') ? $aelia_order->get_total_in_base_currency() : $purchase_params['amount'];
 			$purchase_params['shipping_amount'] =  method_exists($aelia_order, 'get_total_shipping_in_base_currency') ? $aelia_order->get_total_shipping_in_base_currency() : $purchase_params['shipping_amount'];
@@ -875,14 +874,14 @@ class Metrilo_Woo_Analytics_Integration extends WC_Integration {
 
 		// prepare basic order data
 		$purchase_params = array(
-			'order_id' 			  => $order->id,
+			'order_id' 			  => $this->object_property($order, 'order', 'id'),
 			'order_status' 		=> $this->get_order_status($order),
 			'amount' 			    => $order->get_total(),
 			'shipping_amount' => method_exists($order, 'get_total_shipping') ? $order->get_total_shipping() : $order->get_shipping(),
 			'tax_amount'		  => $order->get_total_tax(),
 			'items' 			    => array(),
 			'shipping_method'	=> $order->get_shipping_method(),
-			'payment_method'	=> $order->payment_method_title
+			'payment_method'	=> $this->object_property($order, 'order', 'payment_method_title')
 		);
     if(!empty($order_merge_params)){
       $purchase_params = array_merge($purchase_params, $order_merge_params);
@@ -894,29 +893,29 @@ class Metrilo_Woo_Analytics_Integration extends WC_Integration {
     }
 
 		// attach billing data to order
-		if(isset($order->billing_phone)){
-			$purchase_params['billing_phone'] = $order->billing_phone;
+    if(!empty($this->object_property($order, 'order', 'billing_phone'))){
+			$purchase_params['billing_phone'] = $this->object_property($order, 'order', 'billing_phone');
 		}
-		if(isset($order->billing_city)){
-			$purchase_params['billing_city'] = $order->billing_city;
+    if(!empty($this->object_property($order, 'order', 'billing_city'))){
+			$purchase_params['billing_city'] = $this->object_property($order, 'order', 'billing_city');
 		}
-		if(isset($order->billing_state)){
-			$purchase_params['billing_region'] = $order->billing_state;
+    if(!empty($this->object_property($order, 'order', 'billing_state'))){
+			$purchase_params['billing_region'] = $this->object_property($order, 'order', 'billing_state');
 		}
-		if(isset($order->billing_postcode)){
-			$purchase_params['billing_postcode'] = $order->billing_postcode;
+    if(!empty($this->object_property($order, 'order', 'billing_postcode'))){
+			$purchase_params['billing_postcode'] = $this->object_property($order, 'order', 'billing_postcode');
 		}
-		if(isset($order->billing_country)){
-			$purchase_params['billing_country'] = $order->billing_country;
+    if(!empty($this->object_property($order, 'order', 'billing_country'))){
+			$purchase_params['billing_country'] = $this->object_property($order, 'order', 'billing_country');
 		}
-		if(isset($order->billing_address_1)){
-			$purchase_params['billing_address_line_1'] = $order->billing_address_1;
+    if(!empty($this->object_property($order, 'order', 'billing_address_1'))){
+			$purchase_params['billing_address_line_1'] = $this->object_property($order, 'order', 'billing_address_1');
 		}
-		if(isset($order->billing_address_2)){
-			$purchase_params['billing_address_line_2'] = $order->billing_address_2;
+    if(!empty($this->object_property($order, 'order', 'billing_address_2'))){
+			$purchase_params['billing_address_line_2'] = $this->object_property($order, 'order', 'billing_address_2');
 		}
-		if(isset($order->billing_company)){
-			$purchase_params['billing_company'] = $order->billing_company;
+		if(!empty($this->object_property($order, 'order', 'billing_company'))){
+			$purchase_params['billing_company'] = $this->object_property($order, 'order', 'billing_company');
 		}
 
 		// attach coupons data
@@ -931,6 +930,64 @@ class Metrilo_Woo_Analytics_Integration extends WC_Integration {
 		return $purchase_params;
 
 	}
+
+  /**
+   *
+   *
+   * WooCommerce 3.0 object method referencing
+   *
+   */
+
+   public function object_property($object, $type, $property){
+     if($type == 'user'){
+       return $this->get_user_property($object, $property);
+     }
+     if($type == 'order'){
+       return $this->get_order_property($object, $property);
+     }
+     if($type == 'variation'){
+       return $this->get_variation_property($object, $property);
+     }
+   }
+
+   public function get_order_property($object, $property){
+     switch($property) {
+       case 'id':
+         return method_exists($object, 'get_id') ? $object->get_id() : $object->id;
+       case 'payment_method_title':
+         return method_exists($object, 'get_payment_method_title') ? $object->get_payment_method_title() : $object->payment_method_title;
+       case 'billing_company':
+         return method_exists($object, 'get_billing_company') ? $object->get_billing_company() : $object->billing_company;
+       case 'billing_address_1':
+         return method_exists($object, 'get_billing_address_1') ? $object->get_billing_address_1() : $object->billing_address_1;
+       case 'billing_address_2':
+         return method_exists($object, 'get_billing_address_2') ? $object->get_billing_address_2() : $object->billing_address_2;
+       case 'billing_country':
+         return method_exists($object, 'get_billing_country') ? $object->get_billing_country() : $object->billing_country;
+       case 'billing_postcode':
+         return method_exists($object, 'get_billing_postcode') ? $object->get_billing_postcode() : $object->billing_postcode;
+       case 'billing_state':
+         return method_exists($object, 'get_billing_state') ? $object->get_billing_state() : $object->billing_state;
+       case 'billing_city':
+         return method_exists($object, 'get_billing_city') ? $object->get_billing_city() : $object->billing_city;
+       case 'billing_phone':
+         return method_exists($object, 'get_billing_phone') ? $object->get_billing_phone() : $object->billing_phone;
+     }
+   }
+
+   public function get_user_property($object, $property){
+     switch($property) {
+       case 'id':
+         return method_exists($object, 'get_id') ? $object->get_id() : $object->id;
+     }
+   }
+
+   public function get_variation_property($object, $property){
+     switch($property) {
+       case 'price':
+         return method_exists($object, 'get_price') ? $object->get_price() : $object->price;
+     }
+   }
 
 	/**
 	 *
