@@ -6,7 +6,7 @@ if ( ! class_exists( 'Metrilo_Woo_Analytics_Integration' ) ) :
 class Metrilo_Woo_Analytics_Integration extends WC_Integration {
 
 
-	private $integration_version = '1.7.0';
+	private $integration_version = '1.7.1';
 	private $events_queue = array();
 	private $single_item_tracked = false;
 	private $has_events_in_cookie = false;
@@ -292,7 +292,7 @@ class Metrilo_Woo_Analytics_Integration extends WC_Integration {
 
 				try {
 					$order = new WC_Order($order_id);
-					if(!empty($order) && !empty($this->object_property($order, 'order', 'id'))){
+					if(!empty($order_id) && !empty($order)){
 
 						// prepare the order data
 						$purchase_params = $this->prepare_order_params($order);
@@ -892,31 +892,24 @@ class Metrilo_Woo_Analytics_Integration extends WC_Integration {
       $purchase_params['order_id'] = $this->prefix_order_ids . (string)$purchase_params['order_id'];
     }
 
-		// attach billing data to order
-    if(!empty($this->object_property($order, 'order', 'billing_phone'))){
-			$purchase_params['billing_phone'] = $this->object_property($order, 'order', 'billing_phone');
-		}
-    if(!empty($this->object_property($order, 'order', 'billing_city'))){
-			$purchase_params['billing_city'] = $this->object_property($order, 'order', 'billing_city');
-		}
-    if(!empty($this->object_property($order, 'order', 'billing_state'))){
-			$purchase_params['billing_region'] = $this->object_property($order, 'order', 'billing_state');
-		}
-    if(!empty($this->object_property($order, 'order', 'billing_postcode'))){
-			$purchase_params['billing_postcode'] = $this->object_property($order, 'order', 'billing_postcode');
-		}
-    if(!empty($this->object_property($order, 'order', 'billing_country'))){
-			$purchase_params['billing_country'] = $this->object_property($order, 'order', 'billing_country');
-		}
-    if(!empty($this->object_property($order, 'order', 'billing_address_1'))){
-			$purchase_params['billing_address_line_1'] = $this->object_property($order, 'order', 'billing_address_1');
-		}
-    if(!empty($this->object_property($order, 'order', 'billing_address_2'))){
-			$purchase_params['billing_address_line_2'] = $this->object_property($order, 'order', 'billing_address_2');
-		}
-		if(!empty($this->object_property($order, 'order', 'billing_company'))){
-			$purchase_params['billing_company'] = $this->object_property($order, 'order', 'billing_company');
-		}
+    // attach billing data to order
+    $order_parameters_map = array(
+      'billing_phone'           => 'billing_phone',
+      'billing_city'            => 'billing_city',
+      'billing_region'          => 'billing_state',
+      'billing_postcode'        => 'billing_postcode',
+      'billing_country'         => 'billing_country',
+      'billing_address_line_1'  => 'billing_address_1',
+      'billing_address_line_2'  => 'billing_address_2',
+      'billing_company'         => 'billing_company'
+    );
+
+    foreach($order_parameters_map as $k => $v){
+      $val = $this->object_property($order, 'order', $v);
+      if(!empty($val)){
+        $purchase_params[$k] = $val;
+      }
+    }
 
 		// attach coupons data
 		$coupons_applied = $order->get_used_coupons();
