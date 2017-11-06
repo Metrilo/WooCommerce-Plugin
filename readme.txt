@@ -3,7 +3,7 @@ Contributors: MurryIvanoff
 Tags: woocommerce, analytics, reporting, tracking, woo, ecommerce, funnels, metrics, kissmetrics, mixpanel, crm, history, products, items, rjmetrics, analytics dashboard, google analytics, products, retention, coupons, customers, big data, customer relationship management, subscriptions, woocommerce subscriptions, churn, customer analytics, insights, ltv, email marketing, email, triggered emails, cohorts, sales analytics, customer intelligence, email marketing, automation, cart abandonment, cart recovery
 Requires at least: 2.9.2
 Tested up to: 4.8.1
-Stable Tag: 1.7.2
+Stable Tag: 1.7.3
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -102,7 +102,7 @@ Absolutely! We offer a 14-day free trial on every plan. No obligation. No credit
 
 == Changelog ==
 
-= 1.7.2 =
+= 1.7.3 =
 * Fixed: WooCommerce subscriptions filter glitch
 
 = 1.7.1 =
