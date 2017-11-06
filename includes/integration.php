@@ -6,7 +6,7 @@ if ( ! class_exists( 'Metrilo_Woo_Analytics_Integration' ) ) :
 class Metrilo_Woo_Analytics_Integration extends WC_Integration {
 
 
-	private $integration_version = '1.7.1';
+	private $integration_version = '1.7.2';
 	private $events_queue = array();
 	private $single_item_tracked = false;
 	private $has_events_in_cookie = false;
@@ -814,7 +814,7 @@ class Metrilo_Woo_Analytics_Integration extends WC_Integration {
 		}catch (Exception $e){
 
 		}
-
+    return $order;
 	}
 
 	public function order_status_changed($order_id, $old_status = false, $new_status = false){
