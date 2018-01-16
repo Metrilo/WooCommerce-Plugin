@@ -6,7 +6,7 @@ if ( ! class_exists( 'Metrilo_Woo_Analytics_Integration' ) ) :
 class Metrilo_Woo_Analytics_Integration extends WC_Integration {
 
 
-	private $integration_version = '1.7.4';
+	private $integration_version = '1.7.5';
 	private $events_queue = array();
 	private $single_item_tracked = false;
 	private $has_events_in_cookie = false;
@@ -711,7 +711,11 @@ class Metrilo_Woo_Analytics_Integration extends WC_Integration {
 		}
 
 		// get variation price from object
-		$variation_obj = new WC_Product_Variation($variation_id);
+    if(function_exists('wc_get_product')){
+      $variation_obj = wc_get_product($variation_id);
+    }else{
+      $variation_obj = new WC_Product_Variation($variation_id);
+    }
 		$variation_data['price'] = $this->object_property($variation_obj, 'variation', 'price');
 
 		// return
