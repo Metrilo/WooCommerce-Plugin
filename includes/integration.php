@@ -312,6 +312,12 @@ class Metrilo_Woo_Analytics_Integration extends WC_Integration {
 						$order_items = $order->get_items();
 						foreach($order_items as $product){
 							$product_hash = array('id' => $product['product_id'], 'quantity' => $product['qty'], 'name' => $product['name']);
+
+							// fetch image URL
+							$image_id = get_post_thumbnail_id($product['product_id']);
+							$image = get_post($image_id);
+							if($image && $image->guid) $product_hash['image_url'] = $image->guid;
+
 							if(!empty($product['variation_id'])){
 								$variation_data = $this->prepare_variation_data($product['variation_id']);
 								$product_hash['option_id'] = $variation_data['id'];
