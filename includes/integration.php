@@ -210,23 +210,50 @@ class Metrilo_Woo_Analytics_Integration extends WC_Integration {
 
 	public function check_for_keys(){
 		if(is_admin()){
+
 			if((empty($this->api_key) || empty($this->api_secret)) && empty($_POST['save'])){
 				add_action('admin_notices', array($this, 'admin_keys_notice'));
 			}
-			if(!empty($_POST['save']) && !empty($this->api_key) && !empty($_POST['woocommerce_metrilo-woo-analytics_api_key'])){
-				add_action('admin_notices', array($this, 'admin_import_invite'));
+
+			if(!empty($_POST['save'])){
+				$key = trim($_POST['woocommerce_metrilo-woo-analytics_api_key']);
+				$secret = trim($_POST['woocommerce_metrilo-woo-analytics_api_secret']);
+
+				if(!empty($key) && !empty($secret)){
+					# submit to Metrilo to validate credentials
+					$type = 'integrated';
+					$signature = md5($key.$type.$secret);
+					$end_point_params = array('signature' => $signature, 'type' => $type);
+
+					$response = wp_remote_post($this->http_or_https.'://'.$this->endpoint_domain.'/tracking/'.$key.'/activity',
+																		 array('body' => $end_point_params, 'timeout' => 10, 'blocking' => true));
+
+					if($response['response']['code'] == 200) {
+						add_action('admin_notices', array($this, 'admin_import_invite'));
+					} else {
+						add_action('admin_notices', array($this, 'admin_import_error'));
+						$key = '';
+						$secret = '';
+					}
+
+					$_POST['woocommerce_metrilo-woo-analytics_api_key'] = $key;
+					$_POST['woocommerce_metrilo-woo-analytics_api_secret'] = $secret;
+				}
 			}
 		}
 	}
 
 	public function admin_keys_notice(){
-		if(empty($this->api_key)) $message = 'Almost done! Just enter your Metrilo API key to get started';
-		if(empty($this->api_secret)) $message = 'Almost done! Just enter your Metrilo API key and secret';
+		$message = 'Almost done! Just enter your Metrilo API key and secret';
 		echo '<div class="updated"><p>'.$message.' <a href="'.admin_url('admin.php?page=wc-settings&tab=integration').'">here</a></p></div>';
 	}
 
 	public function admin_import_invite(){
 		echo '<div class="updated"><p>Awesome! Have you tried <a href="'.admin_url('tools.php?page=metrilo-import').'"><strong>importing your existing customers to Metrilo</strong></a>?</p></div>';
+	}
+
+	public function admin_import_error(){
+		echo '<div class="error"><p>The API Token and/or API Secret you have entered are invalid. You can find the correct ones in Settings -> Installation in your Metrilo account.</p></div>';
 	}
 
 	public function ensure_hooks(){
