@@ -1,0 +1,34 @@
+version: '3'
+
+services:
+  mariadb:
+    image: bitnami/mariadb:latest
+    environment:
+      - MARIADB_USER=bn_wordpress
+      - MARIADB_PASSWORD=123456
+      - MARIADB_DATABASE=bitnami_wordpress
+      - MARIADB_ROOT_PASSWORD=123456
+    volumes:
+      - woo_mariadb_data:/bitnami
+    restart: always
+    ports:
+      - 3307:3306
+  wordpress:
+    image: metrilo.azurecr.io/woocommerce:latest
+    environment:
+      - WORDPRESS_DATABASE_USER=bn_wordpress
+      - WORDPRESS_DATABASE_PASSWORD=123456
+      - WORDPRESS_DATABASE_NAME=bitnami_wordpress
+      - WORDPRESS_USERNAME=metrilo
+      - WORDPRESS_PASSWORD=metrilo
+    volumes:
+      - ../:/bitnami/wordpress/wp-content/plugins/metrilo-woocommerce-integration/
+      - woo_wordpress_data:/bitnami
+    restart: always
+    ports:
+      - 8081:80
+    depends_on:
+      - mariadb
+volumes:
+  woo_mariadb_data:
+  woo_wordpress_data:
