@@ -231,7 +231,7 @@ class Metrilo_Woo_Analytics_Integration extends WC_Integration {
 					if($response['response']['code'] == 200) {
 						add_action('admin_notices', array($this, 'admin_import_invite'));
 					} else {
-						add_action('admin_notices', array($this, 'admin_import_error'));
+						WC_Admin_Settings::add_error($this->admin_import_error_message());
 						$key = '';
 						$secret = '';
 					}
@@ -252,8 +252,8 @@ class Metrilo_Woo_Analytics_Integration extends WC_Integration {
 		echo '<div class="updated"><p>Awesome! Have you tried <a href="'.admin_url('tools.php?page=metrilo-import').'"><strong>importing your existing customers to Metrilo</strong></a>?</p></div>';
 	}
 
-	public function admin_import_error(){
-		echo '<div class="error"><p>The API Token and/or API Secret you have entered are invalid. You can find the correct ones in Settings -> Installation in your Metrilo account.</p></div>';
+	public function admin_import_error_message(){
+		return 'The API Token and/or API Secret you have entered are invalid. You can find the correct ones in Settings -> Installation in your Metrilo account.';
 	}
 
 	public function ensure_hooks(){
