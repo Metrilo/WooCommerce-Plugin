@@ -208,6 +208,24 @@ class Metrilo_Woo_Analytics_Integration extends WC_Integration {
 
 	}
 
+	// post activity event to Metrilo
+	public function project_activity($type, $key = null, $secret = null){
+		if(is_null($key)) {
+			$key = $this->api_key;
+		}
+		if(is_null($secret)) {
+			$secret = $this->api_secret;
+		}
+
+		$signature = md5($key.$type.$secret);
+		$end_point_params = array('signature' => $signature, 'type' => $type);
+
+		$response = wp_remote_post($this->http_or_https.'://'.$this->endpoint_domain.'/tracking/'.$key.'/activity',
+															 array('body' => $end_point_params, 'timeout' => 15, 'blocking' => true));
+
+		return ($response['response']['code'] == 200);
+	}
+
 	public function check_for_keys(){
 		if(is_admin()){
 
@@ -221,14 +239,9 @@ class Metrilo_Woo_Analytics_Integration extends WC_Integration {
 
 				if(!empty($key) && !empty($secret)){
 					# submit to Metrilo to validate credentials
-					$type = 'integrated';
-					$signature = md5($key.$type.$secret);
-					$end_point_params = array('signature' => $signature, 'type' => $type);
+					$response = $this->project_activity('integrated', $key, $secret);
 
-					$response = wp_remote_post($this->http_or_https.'://'.$this->endpoint_domain.'/tracking/'.$key.'/activity',
-																		 array('body' => $end_point_params, 'timeout' => 10, 'blocking' => true));
-
-					if($response['response']['code'] == 200) {
+					if($response) {
 						add_action('admin_notices', array($this, 'admin_import_invite'));
 					} else {
 						WC_Admin_Settings::add_error($this->admin_import_error_message());
@@ -306,10 +319,17 @@ class Metrilo_Woo_Analytics_Integration extends WC_Integration {
   		$order_ids = false;
   		if(isset($_REQUEST['chunk_page'])){
   			$chunk_page = (int)$_REQUEST['chunk_page'];
+  			$chunk_pages_total = (int)$_REQUEST['chunk_pages_total'];
   			$chunk_offset = $chunk_page * $this->orders_per_import_chunk;
 
   			// fetch order IDs
   			$order_ids = $wpdb->get_col("select id from {$wpdb->posts} where post_type = 'shop_order' order by id asc limit {$this->orders_per_import_chunk} offset {$chunk_offset}");
+
+  			if($chunk_page == 0) {
+  				$this->project_activity('import_start');
+  			}elseif($chunk_page >= $chunk_pages_total) {
+  				$this->project_activity('import_end');
+  			}
   		}
     }else{
       $order_ids = $specific_order_ids;
