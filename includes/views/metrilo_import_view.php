@@ -22,7 +22,7 @@
 				progress_percents = Math.round(chunk_page * chunk_percentage);
 				update_importing_message('Please wait... '+progress_percents+'% done');
 
-				$.post("<?php echo admin_url('admin-ajax.php'); ?>", {'action': 'metrilo_chunk_sync', 'chunk_page': chunk_page}, function(response) {
+				$.post("<?php echo admin_url('admin-ajax.php'); ?>", {'action': 'metrilo_chunk_sync', 'chunk_page': chunk_page, 'chunk_pages_total': chunk_pages}, function(response) {
 
 					new_chunk_page = chunk_page + 1;
 					if(new_chunk_page <= chunk_pages){
