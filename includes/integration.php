@@ -358,7 +358,14 @@ class Metrilo_Woo_Analytics_Integration extends WC_Integration {
 						// add the items data to the order
 						$order_items = $order->get_items();
 						foreach($order_items as $product){
-							$product_hash = array('id' => $product['product_id'], 'quantity' => $product['qty'], 'name' => $product['name']);
+							$wc_product = $this->resolve_product($product['product_id']);
+
+							$product_hash = array(
+								'id' => $product['product_id'],
+								'quantity' => $product['qty'],
+								'name' => $product['name'],
+								'sku' => $wc_product->get_sku()
+							);
 
 							// fetch image URL
 							$image_id = get_post_thumbnail_id($product['product_id']);
@@ -369,6 +376,7 @@ class Metrilo_Woo_Analytics_Integration extends WC_Integration {
 								$variation_data = $this->prepare_variation_data($product['variation_id']);
 								$product_hash['option_id'] = $variation_data['id'];
 								$product_hash['option_price'] = $variation_data['price'];
+								$product_hash['option_sku'] = $variation_data['sku'];
 							}
 							array_push($purchase_params['items'], $product_hash);
 						}
@@ -551,7 +559,8 @@ class Metrilo_Woo_Analytics_Integration extends WC_Integration {
 			'id'			=> $product_id,
 			'name'			=> $product->get_title(),
 			'price'			=> $product->get_price(),
-			'url'			=> get_permalink($product_id)
+			'url'			=> get_permalink($product_id),
+			'sku'			=> $product->get_sku()
 		);
 
 		if($variation_id){
@@ -559,6 +568,7 @@ class Metrilo_Woo_Analytics_Integration extends WC_Integration {
 			$product_hash['option_id'] = $variation_data['id'];
 			$product_hash['option_name'] = $variation_data['name'];
 			$product_hash['option_price'] = $variation_data['price'];
+			$product_hash['option_sku'] = $variation_data['sku'];
 		}
 		// fetch image URL
 		$image_id = get_post_thumbnail_id($product_id);
@@ -752,7 +762,7 @@ class Metrilo_Woo_Analytics_Integration extends WC_Integration {
 
 	public function prepare_variation_data($variation_id, $variation = false){
 		// prepare variation data array
-		$variation_data = array('id' => $variation_id, 'name' => '', 'price' => '');
+		$variation_data = array('id' => $variation_id, 'name' => '', 'price' => '', 'sku' => '');
 
 		// prepare variation name if $variation is provided as argument
 		if($variation){
@@ -770,6 +780,7 @@ class Metrilo_Woo_Analytics_Integration extends WC_Integration {
       $variation_obj = new WC_Product_Variation($variation_id);
     }
 		$variation_data['price'] = $this->object_property($variation_obj, 'variation', 'price');
+		$variation_data['sku'] = $variation_obj->get_sku();
 
 		// return
 		return $variation_data;
@@ -814,11 +825,20 @@ class Metrilo_Woo_Analytics_Integration extends WC_Integration {
 		// add the items data to the order
 		$order_items = $order->get_items();
 		foreach($order_items as $product){
-			$product_hash = array('id' => $product['product_id'], 'quantity' => $product['qty'], 'name' => $product['name']);
+			$wc_product = $this->resolve_product($product['product_id']);
+
+			$product_hash = array(
+				'id' => $product['product_id'],
+				'quantity' => $product['qty'],
+				'name' => $product['name'],
+				'sku' => $wc_product->get_sku()
+			);
+
 			if(!empty($product['variation_id'])){
 				$variation_data = $this->prepare_variation_data($product['variation_id']);
 				$product_hash['option_id'] = $variation_data['id'];
 				$product_hash['option_price'] = $variation_data['price'];
+				$product_hash['option_sku'] = $variation_data['sku'];
 			}
 			array_push($purchase_params['items'], $product_hash);
 		}
@@ -895,11 +915,20 @@ class Metrilo_Woo_Analytics_Integration extends WC_Integration {
 				// add the items data to the order
 				$order_items = $order->get_items();
 				foreach($order_items as $product){
-					$product_hash = array('id' => $product['product_id'], 'quantity' => $product['qty'], 'name' => $product['name']);
+					$wc_product = $this->resolve_product($product['product_id']);
+
+					$product_hash = array(
+						'id' => $product['product_id'],
+						'quantity' => $product['qty'],
+						'name' => $product['name'],
+						'sku' => $wc_product->get_sku()
+					);
+
 					if(!empty($product['variation_id'])){
 						$variation_data = $this->prepare_variation_data($product['variation_id']);
 						$product_hash['option_id'] = $variation_data['id'];
 						$product_hash['option_price'] = $variation_data['price'];
+						$product_hash['option_sku'] = $variation_data['sku'];
 					}
 					array_push($purchase_params['items'], $product_hash);
 				}
