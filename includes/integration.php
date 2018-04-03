@@ -6,7 +6,7 @@ if ( ! class_exists( 'Metrilo_Woo_Analytics_Integration' ) ) :
 class Metrilo_Woo_Analytics_Integration extends WC_Integration {
 
 
-	private $integration_version = '1.7.5';
+	private $integration_version = '1.7.6';
 	private $events_queue = array();
 	private $single_item_tracked = false;
 	private $has_events_in_cookie = false;
@@ -208,25 +208,65 @@ class Metrilo_Woo_Analytics_Integration extends WC_Integration {
 
 	}
 
+	// post activity event to Metrilo
+	public function project_activity($type, $key = null, $secret = null){
+		if(is_null($key)) {
+			$key = $this->api_key;
+		}
+		if(is_null($secret)) {
+			$secret = $this->api_secret;
+		}
+
+		$signature = md5($key.$type.$secret);
+		$end_point_params = array('signature' => $signature, 'type' => $type);
+
+		$response = wp_remote_post($this->http_or_https.'://'.$this->endpoint_domain.'/tracking/'.$key.'/activity',
+															 array('body' => $end_point_params, 'timeout' => 15, 'blocking' => true));
+
+		return ($response['response']['code'] == 200);
+	}
+
 	public function check_for_keys(){
 		if(is_admin()){
+
 			if((empty($this->api_key) || empty($this->api_secret)) && empty($_POST['save'])){
 				add_action('admin_notices', array($this, 'admin_keys_notice'));
 			}
-			if(!empty($_POST['save']) && !empty($this->api_key) && !empty($_POST['woocommerce_metrilo-woo-analytics_api_key'])){
-				add_action('admin_notices', array($this, 'admin_import_invite'));
+
+			if(!empty($_POST['save'])){
+				$key = trim($_POST['woocommerce_metrilo-woo-analytics_api_key']);
+				$secret = trim($_POST['woocommerce_metrilo-woo-analytics_api_secret']);
+
+				if(!empty($key) && !empty($secret)){
+					# submit to Metrilo to validate credentials
+					$response = $this->project_activity('integrated', $key, $secret);
+
+					if($response) {
+						add_action('admin_notices', array($this, 'admin_import_invite'));
+					} else {
+						WC_Admin_Settings::add_error($this->admin_import_error_message());
+						$key = '';
+						$secret = '';
+					}
+
+					$_POST['woocommerce_metrilo-woo-analytics_api_key'] = $key;
+					$_POST['woocommerce_metrilo-woo-analytics_api_secret'] = $secret;
+				}
 			}
 		}
 	}
 
 	public function admin_keys_notice(){
-		if(empty($this->api_key)) $message = 'Almost done! Just enter your Metrilo API key to get started';
-		if(empty($this->api_secret)) $message = 'Almost done! Just enter your Metrilo API key and secret';
+		$message = 'Almost done! Just enter your Metrilo API key and secret';
 		echo '<div class="updated"><p>'.$message.' <a href="'.admin_url('admin.php?page=wc-settings&tab=integration').'">here</a></p></div>';
 	}
 
 	public function admin_import_invite(){
 		echo '<div class="updated"><p>Awesome! Have you tried <a href="'.admin_url('tools.php?page=metrilo-import').'"><strong>importing your existing customers to Metrilo</strong></a>?</p></div>';
+	}
+
+	public function admin_import_error_message(){
+		return 'The API Token and/or API Secret you have entered are invalid. You can find the correct ones in Settings -> Installation in your Metrilo account.';
 	}
 
 	public function ensure_hooks(){
@@ -279,10 +319,17 @@ class Metrilo_Woo_Analytics_Integration extends WC_Integration {
   		$order_ids = false;
   		if(isset($_REQUEST['chunk_page'])){
   			$chunk_page = (int)$_REQUEST['chunk_page'];
+  			$chunk_pages_total = (int)$_REQUEST['chunk_pages_total'];
   			$chunk_offset = $chunk_page * $this->orders_per_import_chunk;
 
   			// fetch order IDs
   			$order_ids = $wpdb->get_col("select id from {$wpdb->posts} where post_type = 'shop_order' order by id asc limit {$this->orders_per_import_chunk} offset {$chunk_offset}");
+
+  			if($chunk_page == 0) {
+  				$this->project_activity('import_start');
+  			}elseif($chunk_page >= $chunk_pages_total) {
+  				$this->project_activity('import_end');
+  			}
   		}
     }else{
       $order_ids = $specific_order_ids;
@@ -311,7 +358,14 @@ class Metrilo_Woo_Analytics_Integration extends WC_Integration {
 						// add the items data to the order
 						$order_items = $order->get_items();
 						foreach($order_items as $product){
-							$product_hash = array('id' => $product['product_id'], 'quantity' => $product['qty'], 'name' => $product['name']);
+							$wc_product = $this->resolve_product($product['product_id']);
+
+							$product_hash = array(
+								'id' => $product['product_id'],
+								'quantity' => $product['qty'],
+								'name' => $wc_product->get_title(),
+								'sku' => $wc_product->get_sku()
+							);
 
 							// fetch image URL
 							$image_id = get_post_thumbnail_id($product['product_id']);
@@ -321,7 +375,9 @@ class Metrilo_Woo_Analytics_Integration extends WC_Integration {
 							if(!empty($product['variation_id'])){
 								$variation_data = $this->prepare_variation_data($product['variation_id']);
 								$product_hash['option_id'] = $variation_data['id'];
+								$product_hash['option_name'] = $variation_data['name'];
 								$product_hash['option_price'] = $variation_data['price'];
+								$product_hash['option_sku'] = $variation_data['sku'];
 							}
 							array_push($purchase_params['items'], $product_hash);
 						}
@@ -504,7 +560,8 @@ class Metrilo_Woo_Analytics_Integration extends WC_Integration {
 			'id'			=> $product_id,
 			'name'			=> $product->get_title(),
 			'price'			=> $product->get_price(),
-			'url'			=> get_permalink($product_id)
+			'url'			=> get_permalink($product_id),
+			'sku'			=> $product->get_sku()
 		);
 
 		if($variation_id){
@@ -512,6 +569,7 @@ class Metrilo_Woo_Analytics_Integration extends WC_Integration {
 			$product_hash['option_id'] = $variation_data['id'];
 			$product_hash['option_name'] = $variation_data['name'];
 			$product_hash['option_price'] = $variation_data['price'];
+			$product_hash['option_sku'] = $variation_data['sku'];
 		}
 		// fetch image URL
 		$image_id = get_post_thumbnail_id($product_id);
@@ -705,7 +763,7 @@ class Metrilo_Woo_Analytics_Integration extends WC_Integration {
 
 	public function prepare_variation_data($variation_id, $variation = false){
 		// prepare variation data array
-		$variation_data = array('id' => $variation_id, 'name' => '', 'price' => '');
+		$variation_data = array('id' => $variation_id, 'name' => '', 'price' => '', 'sku' => '');
 
 		// prepare variation name if $variation is provided as argument
 		if($variation){
@@ -722,7 +780,13 @@ class Metrilo_Woo_Analytics_Integration extends WC_Integration {
     }else{
       $variation_obj = new WC_Product_Variation($variation_id);
     }
+
+		if(empty($variation_data['name'])) {
+			$variation_data['name'] = $variation_obj->get_name();
+		}
+
 		$variation_data['price'] = $this->object_property($variation_obj, 'variation', 'price');
+		$variation_data['sku'] = $variation_obj->get_sku();
 
 		// return
 		return $variation_data;
@@ -767,11 +831,21 @@ class Metrilo_Woo_Analytics_Integration extends WC_Integration {
 		// add the items data to the order
 		$order_items = $order->get_items();
 		foreach($order_items as $product){
-			$product_hash = array('id' => $product['product_id'], 'quantity' => $product['qty'], 'name' => $product['name']);
+			$wc_product = $this->resolve_product($product['product_id']);
+
+			$product_hash = array(
+				'id' => $product['product_id'],
+				'quantity' => $product['qty'],
+				'name' => $wc_product->get_title(),
+				'sku' => $wc_product->get_sku()
+			);
+
 			if(!empty($product['variation_id'])){
 				$variation_data = $this->prepare_variation_data($product['variation_id']);
 				$product_hash['option_id'] = $variation_data['id'];
+				$product_hash['option_name'] = $variation_data['name'];
 				$product_hash['option_price'] = $variation_data['price'];
+				$product_hash['option_sku'] = $variation_data['sku'];
 			}
 			array_push($purchase_params['items'], $product_hash);
 		}
@@ -848,11 +922,21 @@ class Metrilo_Woo_Analytics_Integration extends WC_Integration {
 				// add the items data to the order
 				$order_items = $order->get_items();
 				foreach($order_items as $product){
-					$product_hash = array('id' => $product['product_id'], 'quantity' => $product['qty'], 'name' => $product['name']);
+					$wc_product = $this->resolve_product($product['product_id']);
+
+					$product_hash = array(
+						'id' => $product['product_id'],
+						'quantity' => $product['qty'],
+						'name' => $wc_product->get_title(),
+						'sku' => $wc_product->get_sku()
+					);
+
 					if(!empty($product['variation_id'])){
 						$variation_data = $this->prepare_variation_data($product['variation_id']);
 						$product_hash['option_id'] = $variation_data['id'];
+						$product_hash['option_name'] = $variation_data['name'];
 						$product_hash['option_price'] = $variation_data['price'];
+						$product_hash['option_sku'] = $variation_data['sku'];
 					}
 					array_push($purchase_params['items'], $product_hash);
 				}
