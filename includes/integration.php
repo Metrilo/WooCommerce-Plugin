@@ -6,7 +6,7 @@ if ( ! class_exists( 'Metrilo_Woo_Analytics_Integration' ) ) :
 class Metrilo_Woo_Analytics_Integration extends WC_Integration {
 
 
-	private $integration_version = '1.7.6';
+	private $integration_version = '1.7.7';
 	private $events_queue = array();
 	private $single_item_tracked = false;
 	private $has_events_in_cookie = false;
@@ -358,14 +358,18 @@ class Metrilo_Woo_Analytics_Integration extends WC_Integration {
 						// add the items data to the order
 						$order_items = $order->get_items();
 						foreach($order_items as $product){
-							$wc_product = $this->resolve_product($product['product_id']);
-
 							$product_hash = array(
 								'id' => $product['product_id'],
-								'quantity' => $product['qty'],
-								'name' => $wc_product->get_title(),
-								'sku' => $wc_product->get_sku()
+								'quantity' => $product['qty']
 							);
+
+							$wc_product = $this->resolve_product($product['product_id']);
+							if($wc_product) {
+								$product_hash['name'] = $wc_product->get_title();
+								$product_hash['sku'] = $wc_product->get_sku();
+							} else {
+								$product_hash['name'] = $product['name'];
+							}
 
 							// fetch image URL
 							$image_id = get_post_thumbnail_id($product['product_id']);
@@ -831,14 +835,18 @@ class Metrilo_Woo_Analytics_Integration extends WC_Integration {
 		// add the items data to the order
 		$order_items = $order->get_items();
 		foreach($order_items as $product){
-			$wc_product = $this->resolve_product($product['product_id']);
-
 			$product_hash = array(
 				'id' => $product['product_id'],
-				'quantity' => $product['qty'],
-				'name' => $wc_product->get_title(),
-				'sku' => $wc_product->get_sku()
+				'quantity' => $product['qty']
 			);
+
+			$wc_product = $this->resolve_product($product['product_id']);
+			if($wc_product) {
+				$product_hash['name'] = $wc_product->get_title();
+				$product_hash['sku'] = $wc_product->get_sku();
+			} else {
+				$product_hash['name'] = $product['name'];
+			}
 
 			if(!empty($product['variation_id'])){
 				$variation_data = $this->prepare_variation_data($product['variation_id']);
@@ -922,14 +930,18 @@ class Metrilo_Woo_Analytics_Integration extends WC_Integration {
 				// add the items data to the order
 				$order_items = $order->get_items();
 				foreach($order_items as $product){
-					$wc_product = $this->resolve_product($product['product_id']);
-
 					$product_hash = array(
 						'id' => $product['product_id'],
-						'quantity' => $product['qty'],
-						'name' => $wc_product->get_title(),
-						'sku' => $wc_product->get_sku()
+						'quantity' => $product['qty']
 					);
+
+					$wc_product = $this->resolve_product($product['product_id']);
+					if($wc_product) {
+						$product_hash['name'] = $wc_product->get_title();
+						$product_hash['sku'] = $wc_product->get_sku();
+					} else {
+						$product_hash['name'] = $product['name'];
+					}
 
 					if(!empty($product['variation_id'])){
 						$variation_data = $this->prepare_variation_data($product['variation_id']);
