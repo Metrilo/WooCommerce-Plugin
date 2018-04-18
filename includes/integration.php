@@ -786,7 +786,7 @@ class Metrilo_Woo_Analytics_Integration extends WC_Integration {
     }
 
 		if(empty($variation_data['name'])) {
-			$variation_data['name'] = $variation_obj->get_name();
+			$variation_data['name'] = $variation_obj->get_title();
 		}
 
 		$variation_data['price'] = $this->object_property($variation_obj, 'variation', 'price');
