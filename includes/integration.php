@@ -785,12 +785,15 @@ class Metrilo_Woo_Analytics_Integration extends WC_Integration {
       $variation_obj = new WC_Product_Variation($variation_id);
     }
 
-		if(empty($variation_data['name'])) {
-			$variation_data['name'] = $variation_obj->get_name();
-		}
-
 		$variation_data['price'] = $this->object_property($variation_obj, 'variation', 'price');
-		$variation_data['sku'] = $variation_obj->get_sku();
+
+		if($variation_obj) {
+			if(empty($variation_data['name'])) {
+				$variation_data['name'] = $variation_obj->get_title();
+			}
+
+			$variation_data['sku'] = $variation_obj->get_sku();
+		}
 
 		// return
 		return $variation_data;
