@@ -981,11 +981,16 @@ class Metrilo_Woo_Analytics_Integration extends WC_Integration {
 
 	public function prepare_order_params($order, $order_merge_params = array()){
 
+		$amount = $order->get_total();
+		if(method_exists($order, 'get_total_refunded')) {
+			$amount -= $order->get_total_refunded();
+		}
+
 		// prepare basic order data
 		$purchase_params = array(
 			'order_id' 			  => $this->object_property($order, 'order', 'id'),
 			'order_status' 		=> $this->get_order_status($order),
-			'amount' 			    => $order->get_total(),
+			'amount' 			    => $amount,
 			'shipping_amount' => method_exists($order, 'get_total_shipping') ? $order->get_total_shipping() : $order->get_shipping(),
 			'tax_amount'		  => $order->get_total_tax(),
 			'items' 			    => array(),
