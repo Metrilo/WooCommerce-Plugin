@@ -6,7 +6,7 @@ if ( ! class_exists( 'Metrilo_Woo_Analytics_Integration' ) ) :
 class Metrilo_Woo_Analytics_Integration extends WC_Integration {
 
 
-	private $integration_version = '1.7.8';
+	private $integration_version = '1.7.9';
 	private $events_queue = array();
 	private $single_item_tracked = false;
 	private $has_events_in_cookie = false;
@@ -279,6 +279,7 @@ class Metrilo_Woo_Analytics_Integration extends WC_Integration {
 		// background events tracking
 		add_action('woocommerce_add_to_cart', array($this, 'add_to_cart'), 10, 6);
 		add_action('woocommerce_before_cart_item_quantity_zero', array($this, 'remove_from_cart'), 10);
+    add_action('woocommerce_remove_cart_item', array($this, 'remove_from_cart'), 10);
 		add_filter('woocommerce_applied_coupon', array($this, 'applied_coupon'), 10);
 
 		// hook on new order placed
@@ -981,11 +982,16 @@ class Metrilo_Woo_Analytics_Integration extends WC_Integration {
 
 	public function prepare_order_params($order, $order_merge_params = array()){
 
+		$amount = $order->get_total();
+		if(method_exists($order, 'get_total_refunded')) {
+			$amount -= $order->get_total_refunded();
+		}
+
 		// prepare basic order data
 		$purchase_params = array(
 			'order_id' 			  => $this->object_property($order, 'order', 'id'),
 			'order_status' 		=> $this->get_order_status($order),
-			'amount' 			    => $order->get_total(),
+			'amount' 			    => $amount,
 			'shipping_amount' => method_exists($order, 'get_total_shipping') ? $order->get_total_shipping() : $order->get_shipping(),
 			'tax_amount'		  => $order->get_total_tax(),
 			'items' 			    => array(),
