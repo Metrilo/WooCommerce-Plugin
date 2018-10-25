@@ -336,7 +336,7 @@ class Metrilo_Woo_Analytics_Integration extends WC_Integration {
 
                 try {
                     $order = new WC_Order($order_id);
-                    if(!empty($order_id) && !empty($order)){
+                    if(!empty($order_id) && !empty($order) && trim(get_post_meta($order_id, '_billing_email', true))){
 
                         // prepare the order data
                         $purchase_params = $this->prepare_order_params($order);
@@ -790,6 +790,10 @@ class Metrilo_Woo_Analytics_Integration extends WC_Integration {
         $order = new WC_Order($order_id);
 
         $call_params = false;
+
+        if(trim(get_post_meta($order_id, '_billing_email', true))) {
+            return;
+        }
 
         // identify user - put identify data in cookie
         $this->identify_call_data = array(
