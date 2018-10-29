@@ -310,6 +310,10 @@ class Metrilo_Woo_Analytics_Integration extends WC_Integration {
         $metrilo_import->output();
     }
 
+    public function stringIsPresent($string){
+        return trim($string) != null;
+    }
+
     public function sync_orders_chunk($specific_order_ids = false){
         global $wpdb;
     
@@ -337,7 +341,7 @@ class Metrilo_Woo_Analytics_Integration extends WC_Integration {
 
                 try {
                     $order = new WC_Order($order_id);
-                    if(!empty($order_id) && !empty($order) && trim(get_post_meta($order_id, '_billing_email', true))){
+                    if(!empty($order_id) && !empty($order) && $this->stringIsPresent(get_post_meta($order_id, '_billing_email', true))){
 
                         // prepare the order data
                         $purchase_params = $this->prepare_order_params($order);
@@ -792,7 +796,7 @@ class Metrilo_Woo_Analytics_Integration extends WC_Integration {
 
         $call_params = false;
 
-        if(trim(get_post_meta($order_id, '_billing_email', true))) {
+        if(!$this->stringIsPresent(get_post_meta($order_id, '_billing_email', true))) {
             return;
         }
 
