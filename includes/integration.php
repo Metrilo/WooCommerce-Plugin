@@ -787,7 +787,7 @@ class Metrilo_Woo_Analytics_Integration extends WC_Integration {
     }
 
     public function applied_coupon($coupon_code){
-        $this->put_event_in_queue('track', 'applied_coupon', $coupon_code);
+        $this->put_event_in_cookie_queue('track', 'applied_coupon', $coupon_code);
     }
 
     public function new_order_event($order_id){
