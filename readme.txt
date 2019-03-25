@@ -1,4 +1,4 @@
-=== WooCommerce Marketing Platform - eCommerce Analytics, CRM and Email by Metrilo ===
+=== Metrilo - WooCommerce Growth Platform ===
 Contributors: MurryIvanoff
 Tags: woocommerce, analytics, reporting, tracking, woo, ecommerce, funnels, metrics, kissmetrics, mixpanel, crm, history, products, items, rjmetrics, analytics dashboard, google analytics, products, retention, coupons, customers, big data, customer relationship management, subscriptions, woocommerce subscriptions, churn, customer analytics, insights, ltv, email marketing, email, triggered emails, cohorts, sales analytics, customer intelligence, email marketing, automation, cart abandonment, cart recovery
 Requires at least: 2.9.2
@@ -7,56 +7,47 @@ Stable Tag: 1.7.11
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
-Instant WooCommerce analytics, powerful CRM and personalized email marketing all in one place
+Ecommerce Analytics and behaviour-driven customer engagement tools for ecommerce brands.
 
 == Description ==
 
-Metrilo is a specialist ecommerce marketing platform for online stores.  Metrilo knows everything about your customers and shows you how to increase basket value, increase repeat purchases and reduce cart abandonment
+Metrilo is the growth marketing platform for modern consumer brands.
+Metrilo’s analytics measure your business performance and give you insights to make strategic decisions. The engagement tools build on top of the vast data made accessible and enable you to bond with your customers long-term.
 
-Unlike generic analytics tools, Metrilo correctly adjusts for cancelled, returned or fraudulent orders. Generic analytics tools just show you data - Metrilo shows you how to grow your business and make sales.
+Metrilo helps your brand grow by making your data actionable and increasing customer retention.
 
-= WooCommerce CRM =
-Metrilo is creating individual level data to drive conversions
+= Optimize your WooCommerce store marketing =
+Metrilo connects marketing and sales to show you how to maximize ROI
 
-* Track everything visitors do – from first visit to latest order
-* Create detailed customer profiles
-* See individual customer’s product interactions
-* Reduce Cart Abandonment
-* Create Customer segmentation based on behavior
-* Add Custom tags and notes per user
-* Send optimized one-on-one marketing emails
-* See all traffic in a live view
+* Key sales metrics and marketing performance at a glance
+* Comparison of marketing channels
+* Real-time revenue reporting and many breakdowns
+* Pre-set sales funnel tracking
+* Product performance data to help you develop your brand
 
-= WooCommerce Email Marketing =
-Powerful personalized emails engage better, fight cart abandonment and drive repeat sales.
+= Grow your WooCommerce store thanks to existing customers =
+Metrilo unlocks opportunities for growth in your customer data
 
-* Get Intelligent reporting on email performance
-* Send data driven personalized e-mails
-* Use our fully responsive ecommerce email composer
-* Use custom domains with your branding
-* Create powerful e-mail automation driven by sales data
+* Comprehensive customer profiles so you truly understand your buyers
+* Manage your entire customer database with tags and segments
+* Improve the buying experience with customer journey tracking
+* Find out what stimulates repeat orders in your business
 
-= WooCommerce Analytics =
-Specialist ecommerce analytics developed for online stores
+= WOOCOMMERCE EMAIL MARKETING =
+Metrilo makes it easy to engage your customer base for higher retention
+* Integrated data and email for building relationships with customers
+* Customer lifecycle monitoring and loyalty analysis
+* Segmentations and emails for personalized communication
+* Tailored engagement on autopilot
+* Automated feedback gathering
+* Recover lost sales
 
-* Start with our Preset Sales Funnels
-* Get clear and in-depth revenue analysis
-* Understand your marketing spend with Acquisition sources report
-* Get order statuses updated in real time (and accounted for in revenue)
-* Understand individual Products performance
-* Retention Analysis
-* CLV, AOV, Conversion Rates, and more metrics
+The official Metrilo plugin connects your WooCommerce store with the Metrilo platform in less than 5 minutes. It is a self-standing platform that tracks data in real time and reports are accurate to the minute without slowing down your website.
 
-
-This plugin lets you connect your WooCommerce store with Metrilo in less than 5 minutes. All tracking is real-time and reports are accurate to the minute.
-
-Metrilo is an all-in-one marketing product and runs on a self-standing platform so your website speed is not affected. You can create your account at [metrilo.com](https://www.metrilo.com/signup?ref=wpplugin)
-
-We provide Ask-Us-Anything support. You are more than welcome to get in touch with us anytime using the live-chat on our website.
-
+You can start growing your brand today - your insights will be available immediately as soon as you start your trial at [metrilo.com](https://www.metrilo.com/signup?ref=wpplugin).
 [Sign up now for free](https://www.metrilo.com/signup?ref=wpplugin) and get all-inclusive 14-day trial.
 
-Metrilo gets better every single day. We're excited to have you onboard!
+We provide Ask-Us-Anything support. You are more than welcome to get in touch with us anytime using the live chat on our website.
 
 
 == Installation ==
