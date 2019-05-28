@@ -375,8 +375,9 @@ class Metrilo_Woo_Analytics_Integration extends WC_Integration {
 
                             // fetch image URL
                             $image_id = get_post_thumbnail_id($product['product_id']);
-                            $image = get_post($image_id);
-                            if($image && $image->guid) $product_hash['image_url'] = $image->guid;
+                            
+                            $image_url = wp_get_attachment_image_src($image_id, 'full')[0];
+                            if($image_url) $product_hash['image_url'] = $image_url;
 
                             if(!empty($product['variation_id'])){
                                 $variation_data = $this->prepare_variation_data($product['variation_id']);
