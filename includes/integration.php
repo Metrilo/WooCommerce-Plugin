@@ -313,6 +313,11 @@ class Metrilo_Woo_Analytics_Integration extends WC_Integration {
     public function stringIsPresent($string){
         return trim($string) != null;
     }
+    
+    public function getImgUrl($productId) {
+        $image_id = get_post_thumbnail_id($productId);
+        return wp_get_attachment_image_src($image_id, 'full')[0];
+    }
 
     public function sync_orders_chunk($specific_order_ids = false){
         global $wpdb;
@@ -374,9 +379,9 @@ class Metrilo_Woo_Analytics_Integration extends WC_Integration {
                             }
 
                             // fetch image URL
-                            $image_id = get_post_thumbnail_id($product['product_id']);
-                            $image = get_post($image_id);
-                            if($image && $image->guid) $product_hash['image_url'] = $image->guid;
+                            $image_url = $this->getImgUrl($product['product_id']);
+                            if($image_url) $product_hash['image_url'] = $image_url;
+                            
 
                             if(!empty($product['variation_id'])){
                                 $variation_data = $this->prepare_variation_data($product['variation_id']);
@@ -576,9 +581,8 @@ class Metrilo_Woo_Analytics_Integration extends WC_Integration {
             $product_hash['option_sku'] = $variation_data['sku'];
         }
         // fetch image URL
-        $image_id = get_post_thumbnail_id($product_id);
-        $image = get_post($image_id);
-        if($image && $image->guid) $product_hash['image_url'] = $image->guid;
+        $image_url = $this->getImgUrl($product_id);
+        if($image_url) $product_hash['image_url'] = $image_url;
 
         // fetch the categories
         $categories_list = array();
