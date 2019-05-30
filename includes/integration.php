@@ -5,7 +5,7 @@ if ( ! class_exists( 'Metrilo_Woo_Analytics_Integration' ) ) :
 
 class Metrilo_Woo_Analytics_Integration extends WC_Integration {
     
-    private $integration_version = '1.7.11';
+    private $integration_version = '1.7.12';
     private $events_queue = array();
     private $single_item_tracked = false;
     private $has_events_in_cookie = false;
