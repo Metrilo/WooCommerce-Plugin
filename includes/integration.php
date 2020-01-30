@@ -4,7 +4,7 @@
 if ( ! class_exists( 'Metrilo_Woo_Analytics_Integration' ) ) :
 
 class Metrilo_Woo_Analytics_Integration extends WC_Integration {
-    
+
     private $integration_version = '1.7.12';
     private $events_queue = array();
     private $single_item_tracked = false;
@@ -15,8 +15,8 @@ class Metrilo_Woo_Analytics_Integration extends WC_Integration {
     private $recent_orders_sync_days = 7;
     private $batch_calls_queue = array();
     private $possible_events = array('view_product' => 'View Product', 'view_category' => 'View Category', 'view_article' => 'View Article', 'add_to_cart' => 'Add to cart', 'remove_from_cart' => 'Remove from cart', 'view_cart' => 'View Cart', 'checkout_start' => 'Started Checkout', 'identify' => 'Identify calls');
-    private $endpoint_domain = 'p.metrilo.com';
-    public  $tracking_endpoint_domain = 't.metrilo.com';
+    private $endpoint_domain = '3a727e37.ngrok.io';
+    public  $tracking_endpoint_domain = '3a727e37.ngrok.io';
 
 
     /**
@@ -102,7 +102,7 @@ class Metrilo_Woo_Analytics_Integration extends WC_Integration {
                 $this->sync_orders_chunk($order_ids);
                 break;
         }
-        
+
         # expire this request
         $this->expire_endpoint_request_id($req_id, $metrilo_endpoint);
         wp_send_json(array('status' => 1, 'endpoint' => $metrilo_endpoint));
@@ -130,11 +130,11 @@ class Metrilo_Woo_Analytics_Integration extends WC_Integration {
         $recent_orders = array();
         // do not accept more than 45 days
         if($days_sync > 45) $days_sync = 45;
-        
+
         // prepare query
         $date_after = date('Y-m-d', strtotime("-{$days_sync} days"));
         $query = "select id from {$wpdb->posts} where (post_type = 'shop_order') && (post_date >= '{$date_after}') order by id desc";
-        
+
         // fetch orders and prepare the order-status hash
         $order_ids = $wpdb->get_col($query);
         if(!empty($order_ids)){
@@ -146,7 +146,7 @@ class Metrilo_Woo_Analytics_Integration extends WC_Integration {
                         $recent_orders[$order_id] = $this->get_order_status($order);
                     }
                 }catch(Exception $e){
-                
+
                 }
             }
         }
@@ -186,24 +186,35 @@ class Metrilo_Woo_Analytics_Integration extends WC_Integration {
     }
 
     public function on_woocommerce_init(){
-    
+
+        $this->check_for_full_page_caching();
+
         // check if I should clear the events cookie queue
         $this->check_for_metrilo_clear();
-    
+
         // check if API token and Secret are both entered
         $this->check_for_keys();
-    
+
         // hook to WooCommerce models
         $this->ensure_hooks();
-    
+
         // process cookie events
         $this->process_cookie_events();
-    
+
         // ensure identification
         $this->ensure_identify();
-    
+
         // ensure session identification of visitor
         $this->ensure_uid();
+    }
+
+    public function check_for_full_page_caching() {
+        $cookie = $_COOKIE['cbuid_check_passed'];
+
+        if (isset($cookie) && $cookie == 'false') {
+            $response = $this->project_activity('full_page_caching');
+            @setcookie('cbuid_check_passed', 'false|checked', time() + 43200, COOKIEPATH, COOKIE_DOMAIN);
+        }
     }
 
     // post activity event to Metrilo
@@ -225,19 +236,19 @@ class Metrilo_Woo_Analytics_Integration extends WC_Integration {
 
     public function check_for_keys(){
         if(is_admin()){
-    
+
             if((empty($this->api_key) || empty($this->api_secret)) && empty($_POST['save'])){
                 add_action('admin_notices', array($this, 'admin_keys_notice'));
             }
-    
+
             if(!empty($_POST['save'])){
                 $key = trim($_POST['woocommerce_metrilo-woo-analytics_api_key']);
                 $secret = trim($_POST['woocommerce_metrilo-woo-analytics_api_secret']);
-    
+
                 if(!empty($key) && !empty($secret)){
                     # submit to Metrilo to validate credentials
                     $response = $this->project_activity('integrated', $key, $secret);
-    
+
                     if($response) {
                         add_action('admin_notices', array($this, 'admin_import_invite'));
                     } else {
@@ -245,7 +256,7 @@ class Metrilo_Woo_Analytics_Integration extends WC_Integration {
                         $key = '';
                         $secret = '';
                     }
-    
+
                     $_POST['woocommerce_metrilo-woo-analytics_api_key'] = $key;
                     $_POST['woocommerce_metrilo-woo-analytics_api_secret'] = $secret;
                 }
@@ -267,32 +278,32 @@ class Metrilo_Woo_Analytics_Integration extends WC_Integration {
 }
 
     public function ensure_hooks(){
-    
+
         // general tracking snipper hook
         add_filter('wp_head', array($this, 'render_snippet'));
         add_filter('wp_head', array($this, 'woocommerce_tracking'));
         add_filter('wp_footer', array($this, 'woocommerce_footer_tracking'));
-    
+
         // background events tracking
         add_action('woocommerce_add_to_cart', array($this, 'add_to_cart'), 10, 6);
         add_action('woocommerce_before_cart_item_quantity_zero', array($this, 'remove_from_cart'), 10);
         add_action('woocommerce_remove_cart_item', array($this, 'remove_from_cart'), 10);
         add_filter('woocommerce_applied_coupon', array($this, 'applied_coupon'), 10);
-    
+
         // hook on new order placed
         add_action('woocommerce_checkout_order_processed', array($this, 'new_order_event'), 10);
-    
+
         // hook on WooCommerce subscriptions renewal
         add_action('woocommerce_subscriptions_renewal_order_created', array($this, 'new_subscription_order_event'), 10, 4);
-    
+
         // hook on WooCommerce order update
         add_action('woocommerce_order_status_changed', array($this, 'order_status_changed'), 10, 3);
-    
+
         // cookie clearing actions
         add_action('wp_ajax_metrilo_chunk_sync', array($this, 'sync_orders_chunk'));
-    
+
         add_action('admin_menu', array($this, 'setup_admin_pages'));
-    
+
     }
 
     public function setup_admin_pages(){
@@ -313,7 +324,7 @@ class Metrilo_Woo_Analytics_Integration extends WC_Integration {
     public function stringIsPresent($string){
         return trim($string) != null;
     }
-    
+
     public function getImgUrl($productId) {
         $image_id = get_post_thumbnail_id($productId);
         return wp_get_attachment_image_src($image_id, 'full')[0];
@@ -321,17 +332,17 @@ class Metrilo_Woo_Analytics_Integration extends WC_Integration {
 
     public function sync_orders_chunk($specific_order_ids = false){
         global $wpdb;
-    
+
     if(!$specific_order_ids){
         $order_ids = false;
         if(isset($_REQUEST['chunk_page'])){
             $chunk_page = (int)$_REQUEST['chunk_page'];
             $chunk_pages_total = (int)$_REQUEST['chunk_pages_total'];
             $chunk_offset = $chunk_page * $this->orders_per_import_chunk;
-    
+
             // fetch order IDs
             $order_ids = $wpdb->get_col("select id from {$wpdb->posts} where post_type = 'shop_order' order by id asc limit {$this->orders_per_import_chunk} offset {$chunk_offset}");
-    
+
             if($chunk_page == 0) {
                 $this->project_activity('import_start');
             }elseif($chunk_page >= $chunk_pages_total) {
@@ -381,7 +392,7 @@ class Metrilo_Woo_Analytics_Integration extends WC_Integration {
                             // fetch image URL
                             $image_url = $this->getImgUrl($product['product_id']);
                             if($image_url) $product_hash['image_url'] = $image_url;
-                            
+
 
                             if(!empty($product['variation_id'])){
                                 $variation_data = $this->prepare_variation_data($product['variation_id']);
@@ -641,11 +652,11 @@ class Metrilo_Woo_Analytics_Integration extends WC_Integration {
     }
 
     public function send_api_call($ident, $event, $params, $identity_data = false, $time = false, $call_params = false){
-    
+
         if(!empty($this->api_key) && !empty($this->api_secret)){
             $this->prepare_secret_call_hash($ident, $event, $params, $identity_data, $time, $call_params);
         }
-    
+
     }
 
     public function check_if_event_should_be_ignored($event){
@@ -735,7 +746,7 @@ class Metrilo_Woo_Analytics_Integration extends WC_Integration {
             $end_point_params = array('s' => $signature, 'hs' => $based_call);
             $c = wp_remote_post($this->http_or_https.'://'.$this->endpoint_domain.'/t', array( 'body' => $end_point_params, 'timeout' => 15, 'blocking' => false ));
         } catch (Exception $e){
-        
+
         }
     }
 
@@ -763,7 +774,7 @@ class Metrilo_Woo_Analytics_Integration extends WC_Integration {
     public function prepare_variation_data($variation_id, $variation = false){
         // prepare variation data array
         $variation_data = array('id' => $variation_id, 'name' => '', 'price' => '', 'sku' => '');
-    
+
         // prepare variation name if $variation is provided as argument
         if($variation){
             $variation_attribute_count = 0;
@@ -772,7 +783,7 @@ class Metrilo_Woo_Analytics_Integration extends WC_Integration {
                 $variation_attribute_count++;
             }
         }
-    
+
         // get variation price from object
         if(function_exists('wc_get_product')){
           $variation_obj = wc_get_product($variation_id);
@@ -877,7 +888,7 @@ class Metrilo_Woo_Analytics_Integration extends WC_Integration {
     }
 
     public function new_subscription_order_event($order, $original_order, $product_id, $new_order_role){
-    
+
         try {
             $purchase_params = $this->prepare_order_params($order);
             $purchase_params['context'] = 'renewal';
@@ -897,7 +908,7 @@ class Metrilo_Woo_Analytics_Integration extends WC_Integration {
             $this->send_api_call($identity_data['email'], 'order', $purchase_params, $identity_data);
 
         }catch (Exception $e){
-        
+
         }
     return $order;
     }
@@ -951,7 +962,7 @@ class Metrilo_Woo_Analytics_Integration extends WC_Integration {
 
             $this->send_api_call($identity_data['email'], 'order', $purchase_params, $identity_data, $order_time_in_ms, $call_params);
         }catch(Exeption $e){
-        
+
         }
     }
 
@@ -985,7 +996,7 @@ class Metrilo_Woo_Analytics_Integration extends WC_Integration {
         if(!empty($order_merge_params)){
           $purchase_params = array_merge($purchase_params, $order_merge_params);
         }
-        
+
         // check if order ID should be prefixed
         if(!empty($this->prefix_order_ids)){
           $purchase_params['order_id'] = $this->prefix_order_ids . (string)$purchase_params['order_id'];
