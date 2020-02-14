@@ -345,8 +345,11 @@ class Metrilo_Woo_Analytics_Integration extends WC_Integration {
             foreach($order_ids as $order_id){
 
                 try {
-                    $order = new WC_Order($order_id);
-                    if(!empty($order_id) && !empty($order) && ($this->stringIsPresent(get_post_meta($order_id, '_billing_email', true)) || $this->stringIsPresent(get_post_meta($order_id, '_billing_phone', true)))){
+                    $order     = new WC_Order($order_id);
+                    $has_email = $this->stringIsPresent(get_post_meta($order_id, '_billing_email', true));
+                    $has_phone = $this->stringIsPresent(get_post_meta($order_id, '_billing_phone', true));
+                    
+                    if(!empty($order_id) && !empty($order) && ($has_email || $has_phone)){
 
                         // prepare the order data
                         $purchase_params = $this->prepare_order_params($order);
@@ -805,20 +808,22 @@ class Metrilo_Woo_Analytics_Integration extends WC_Integration {
 
         $call_params = false;
     
-        if(!$this->stringIsPresent(get_post_meta($order_id, '_billing_email', true)) && !$this->stringIsPresent(get_post_meta($order_id, '_billing_phone', true))) {
-            return;
-        }
-    
         $email     = get_post_meta($order_id, '_billing_email', true);
         $phone     = get_post_meta($order_id, '_billing_phone', true);
         $firstName = get_post_meta($order_id, '_billing_first_name', true);
         $lastName  = get_post_meta($order_id, '_billing_last_name', true);
-    
+        
+        if(!$this->stringIsPresent($email) && !$this->stringIsPresent($phone)) {
+            return;
+        }
+        
+        $customerEmail = $email ? $email : $phone . '@phone_email';
+        
         // identify user - put identify data in cookie
         $this->identify_call_data = array(
-            'id'        => $email ? $email : $phone . '@phone_email',
+            'id'        => $customerEmail,
             'params'    => array(
-                'email' 		=> $email ? $email : $phone . '@phone_email',
+                'email' 		=> $customerEmail,
                 'first_name' 	=> $firstName,
                 'last_name' 	=> $lastName,
                 'name'			=> $firstName . ' ' . $lastName,
