@@ -345,8 +345,11 @@ class Metrilo_Woo_Analytics_Integration extends WC_Integration {
             foreach($order_ids as $order_id){
 
                 try {
-                    $order = new WC_Order($order_id);
-                    if(!empty($order_id) && !empty($order) && $this->stringIsPresent(get_post_meta($order_id, '_billing_email', true))){
+                    $order     = new WC_Order($order_id);
+                    $has_email = $this->stringIsPresent(get_post_meta($order_id, '_billing_email', true));
+                    $has_phone = $this->stringIsPresent(get_post_meta($order_id, '_billing_phone', true));
+                    
+                    if(!empty($order_id) && !empty($order) && ($has_email || $has_phone)){
 
                         // prepare the order data
                         $purchase_params = $this->prepare_order_params($order);
@@ -411,11 +414,16 @@ class Metrilo_Woo_Analytics_Integration extends WC_Integration {
     }
 
     public function prepare_order_identity_data($order){
+        $email     = get_post_meta($this->object_property($order, 'order', 'id'), '_billing_email', true);
+        $phone     = get_post_meta($this->object_property($order, 'order', 'id'), '_billing_phone', true);
+        $firstName = get_post_meta($this->object_property($order, 'order', 'id'), '_billing_first_name', true);
+        $lastName  = get_post_meta($this->object_property($order, 'order', 'id'), '_billing_first_name', true);
+    
         $identity_data = array(
-                    'email'         => get_post_meta($this->object_property($order, 'order', 'id'), '_billing_email', true),
-                    'first_name'    => get_post_meta($this->object_property($order, 'order', 'id'), '_billing_first_name', true),
-                    'last_name'     => get_post_meta($this->object_property($order, 'order', 'id'), '_billing_last_name', true),
-                    'name'          => get_post_meta($this->object_property($order, 'order', 'id'), '_billing_first_name', true) . ' ' . get_post_meta($this->object_property($order, 'order', 'id'), '_billing_last_name', true),
+            'email'         => $email ? $email : $phone . '@phone_email',
+            'first_name'    => $firstName,
+            'last_name'     => $lastName,
+            'name'          => $firstName . ' ' . $lastName,
         );
 
         if(empty($identity_data['email'])){
@@ -782,7 +790,7 @@ class Metrilo_Woo_Analytics_Integration extends WC_Integration {
         $variation_data['price'] = $this->object_property($variation_obj, 'variation', 'price');
         if($variation_obj) {
             if(empty($variation_data['name'])) {
-                $variation_data['name'] = $variation_obj->get_title();
+                $variation_data['name'] = $variation_obj->get_name();
             }
             $variation_data['sku'] = $variation_obj->get_sku();
         }
@@ -799,20 +807,27 @@ class Metrilo_Woo_Analytics_Integration extends WC_Integration {
         $order = new WC_Order($order_id);
 
         $call_params = false;
-
-        if(!$this->stringIsPresent(get_post_meta($order_id, '_billing_email', true))) {
+    
+        $email     = get_post_meta($order_id, '_billing_email', true);
+        $phone     = get_post_meta($order_id, '_billing_phone', true);
+        $firstName = get_post_meta($order_id, '_billing_first_name', true);
+        $lastName  = get_post_meta($order_id, '_billing_last_name', true);
+        
+        if(!$this->stringIsPresent($email) && !$this->stringIsPresent($phone)) {
             return;
         }
-
+        
+        $customerEmail = $email ? $email : $phone . '@phone_email';
+        
         // identify user - put identify data in cookie
         $this->identify_call_data = array(
-            'id'        => get_post_meta($order_id, '_billing_email', true),
+            'id'        => $customerEmail,
             'params'    => array(
-                        'email' 		=> get_post_meta($order_id, '_billing_email', true),
-                        'first_name' 	=> get_post_meta($order_id, '_billing_first_name', true),
-                        'last_name' 	=> get_post_meta($order_id, '_billing_last_name', true),
-                        'name'			=> get_post_meta($order_id, '_billing_first_name', true) . ' ' . get_post_meta($order_id, '_billing_last_name', true),
-                    )
+                'email' 		=> $customerEmail,
+                'first_name' 	=> $firstName,
+                'last_name' 	=> $lastName,
+                'name'			=> $firstName . ' ' . $lastName,
+            )
         );
 
         // prepare the order data
