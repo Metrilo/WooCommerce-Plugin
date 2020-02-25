@@ -5,7 +5,7 @@ if ( ! class_exists( 'Metrilo_Woo_Analytics_Integration' ) ) :
 
 class Metrilo_Woo_Analytics_Integration extends WC_Integration {
     
-    private $integration_version = '1.7.12';
+    private $integration_version = '1.7.13';
     private $events_queue = array();
     private $single_item_tracked = false;
     private $has_events_in_cookie = false;
@@ -1291,7 +1291,7 @@ class Metrilo_Woo_Analytics_Integration extends WC_Integration {
             'api_key' => array(
                 'title'             => __( 'API Token', 'metrilo-woo-analytics' ),
                 'type'              => 'text',
-                'description'       => __( '<strong style="color: green;">(Required)</strong> Enter your Metrilo API token. You can find it under "Settings" in your Metrilo account.<br /> Don\'t have one? <a href="https://www.metrilo.com/signup?ref=woointegration" target="_blank">Sign-up for free</a> now, it only takes a few seconds.', 'metrilo-woo-analytics' ),
+                'description'       => __( '<strong style="color: green;">(Required)</strong> Enter your Metrilo API token. You can find it under "Settings" in your Metrilo account.<br /> Don\'t have one? <a href="https://www.metrilo.com/signup?ref=woointegration&plan=premium&skip=true" target="_blank">Sign-up for free</a> now, it only takes a few seconds.', 'metrilo-woo-analytics' ),
                 'desc_tip'          => false,
                 'default'           => ''
             ),
