@@ -2,8 +2,8 @@
 Contributors: MurryIvanoff
 Tags: woocommerce, analytics, reporting, tracking, woo, ecommerce, funnels, metrics, kissmetrics, mixpanel, crm, history, products, items, rjmetrics, analytics dashboard, google analytics, products, retention, coupons, customers, big data, customer relationship management, subscriptions, woocommerce subscriptions, churn, customer analytics, insights, ltv, email marketing, email, triggered emails, cohorts, sales analytics, customer intelligence, email marketing, automation, cart abandonment, cart recovery
 Requires at least: 2.9.2
-Tested up to: 4.9.8
-Stable Tag: 1.7.12
+Tested up to: 5.2.3
+Stable Tag: 1.7.13
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -44,8 +44,8 @@ Metrilo makes it easy to engage your customer base for higher retention
 
 The official Metrilo plugin connects your WooCommerce store with the Metrilo platform in less than 5 minutes. It is a self-standing platform that tracks data in real time and reports are accurate to the minute without slowing down your website.
 
-You can start growing your brand today - your insights will be available immediately as soon as you start your trial at [metrilo.com](https://www.metrilo.com/signup?ref=wpplugin).
-[Sign up now for free](https://www.metrilo.com/signup?ref=wpplugin) and get all-inclusive 14-day trial.
+You can start growing your brand today - your insights will be available immediately as soon as you start your trial at [metrilo.com](https://www.metrilo.com/signup?ref=wpplugin&plan=premium&skip=true).
+[Sign up now for free](https://www.metrilo.com/signup?ref=wpplugin&plan=premium&skip=true) and get all-inclusive 14-day trial.
 
 We provide Ask-Us-Anything support. You are more than welcome to get in touch with us anytime using the live chat on our website.
 
@@ -56,7 +56,7 @@ Once you install the plugin, follow these steps:
 
 1. Activate the plugin.
 2. Go to Woocommerce's Settings page and click the Integrations tab.
-3. Enter your unique Metrilo API token and click "Save settings". If you don't have API token, [sign up for free now](https://www.metrilo.com/signup?ref=wpplugin) and get one!
+3. Enter your unique Metrilo API token and click "Save settings". If you don't have API token, [sign up for free now](https://www.metrilo.com/signup?ref=wpplugin&plan=premium&skip=true) and get one!
 4. That's it. Enjoy a cup of coffee :-)
 
 == Frequently Asked Questions ==
@@ -92,6 +92,9 @@ Absolutely! We offer a 14-day free trial on every plan. No obligation. No credit
 5. Easily build and send personalized responsive email campaigns
 
 == Changelog ==
+
+= 1.7.13 =
+* New: Additional functionality to handle phone orders.
 
 = 1.7.12 =
 * Fixed: extracting image url instead of GUID when syncing with Metrilo.
