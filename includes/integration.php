@@ -5,7 +5,7 @@ if ( ! class_exists( 'Metrilo_Woo_Analytics_Integration' ) ) :
 
 class Metrilo_Woo_Analytics_Integration extends WC_Integration {
     
-    private $integration_version = '1.7.13';
+    private $integration_version = '1.7.14';
     private $events_queue = array();
     private $single_item_tracked = false;
     private $has_events_in_cookie = false;
@@ -417,7 +417,7 @@ class Metrilo_Woo_Analytics_Integration extends WC_Integration {
         $email     = get_post_meta($this->object_property($order, 'order', 'id'), '_billing_email', true);
         $phone     = get_post_meta($this->object_property($order, 'order', 'id'), '_billing_phone', true);
         $firstName = get_post_meta($this->object_property($order, 'order', 'id'), '_billing_first_name', true);
-        $lastName  = get_post_meta($this->object_property($order, 'order', 'id'), '_billing_first_name', true);
+        $lastName  = get_post_meta($this->object_property($order, 'order', 'id'), '_billing_last_name', true);
     
         $identity_data = array(
             'email'         => $email ? $email : $phone . '@phone_email',
