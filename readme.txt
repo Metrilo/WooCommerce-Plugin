@@ -94,7 +94,7 @@ Absolutely! We offer a 14-day free trial on every plan. No obligation. No credit
 == Changelog ==
 
 = 1.7.15 =
-* Fixed: Decode html special symbols before syncing data with Metrilo.
+* Fixed: Decode html entities before syncing data with Metrilo.
 
 = 1.7.14 =
 * Fixed: Last name parameter taking values for First name when syncing data with Metrilo.
