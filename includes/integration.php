@@ -1024,9 +1024,15 @@ class Metrilo_Woo_Analytics_Integration extends WC_Integration {
                 $purchase_params[$k] = $val;
             }
         }
-
+    
         // attach coupons data
-        $coupons_applied = $order->get_used_coupons();
+        global $woocommerce;
+        if ( version_compare( $woocommerce->version, '3.7', ">" ) ) {
+            $coupons_applied = $order->get_coupon_codes();
+        } else {
+            $coupons_applied = $order->get_used_coupons();
+        }
+        
         if(count($coupons_applied) > 0){
             $purchase_params['coupons'] = $coupons_applied;
         }
