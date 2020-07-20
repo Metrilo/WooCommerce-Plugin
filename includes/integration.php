@@ -275,7 +275,6 @@ class Metrilo_Woo_Analytics_Integration extends WC_Integration {
     
         // background events tracking
         add_action('woocommerce_add_to_cart', array($this, 'add_to_cart'), 10, 6);
-        add_action('woocommerce_before_cart_item_quantity_zero', array($this, 'remove_from_cart'), 10);
         add_action('woocommerce_remove_cart_item', array($this, 'remove_from_cart'), 10);
         add_filter('woocommerce_applied_coupon', array($this, 'applied_coupon'), 10);
     
@@ -456,8 +455,6 @@ class Metrilo_Woo_Analytics_Integration extends WC_Integration {
     public function resolve_product($product_id){
         if(function_exists('wc_get_product')){
             return wc_get_product($product_id);
-        }else{
-            return get_product($product_id);
         }
     }
 
