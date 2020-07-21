@@ -2,8 +2,8 @@
 Contributors: MurryIvanoff
 Tags: woocommerce, analytics, reporting, tracking, woo, ecommerce, funnels, metrics, kissmetrics, mixpanel, crm, history, products, items, rjmetrics, analytics dashboard, google analytics, products, retention, coupons, customers, big data, customer relationship management, subscriptions, woocommerce subscriptions, churn, customer analytics, insights, ltv, email marketing, email, triggered emails, cohorts, sales analytics, customer intelligence, email marketing, automation, cart abandonment, cart recovery
 Requires at least: 2.9.2
-Tested up to: 5.2.3
-Stable Tag: 1.7.16
+Tested up to: 5.4.2
+Stable Tag: 1.7.17
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -92,6 +92,9 @@ Absolutely! We offer a 14-day free trial on every plan. No obligation. No credit
 5. Easily build and send personalized responsive email campaigns
 
 == Changelog ==
+
+= 1.7.17 =
+* Fixed: Deprecated get_product method and woocommerce_before_cart_item_quantity_zero action hook usage in woocommerce versions higher than 3.7.
 
 = 1.7.16 =
 * Fixed: Deprecated coupon code method usage in woocommerce versions higher than 3.7.
