@@ -94,7 +94,7 @@ Absolutely! We offer a 14-day free trial on every plan. No obligation. No credit
 == Changelog ==
 
 = 1.7.18 =
-* Compatibility update: Tested with Woocommerce versions up to 4.5.1
+* Compatibility update: Tested with Woocommerce versions up to 4.5.1 and Wordpress versions up to 5.5.1
 
 = 1.7.17 =
 * Fixed: Deprecated get_product method and woocommerce_before_cart_item_quantity_zero action hook usage in woocommerce versions higher than 3.7.
