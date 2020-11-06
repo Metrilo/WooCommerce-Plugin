@@ -1194,7 +1194,7 @@ class Metrilo_Woo_Analytics_Integration extends WC_Integration {
         $items = array();
         $data = $this->session_get($this->get_cookie_name());
         if(!empty($data)){
-            if(get_magic_quotes_gpc()) $data = stripslashes($data);
+            $data = stripslashes($data);
             $items = json_decode($data, true);
         }
         return $items;
@@ -1204,7 +1204,7 @@ class Metrilo_Woo_Analytics_Integration extends WC_Integration {
         $identify = array();
         $data = $this->session_get($this->get_do_identify_cookie_name());
         if(!empty($data)){
-            if(get_magic_quotes_gpc()) $data = stripslashes($data);
+            $data = stripslashes($data);
             $identify = json_decode($data, true);
         }
         return $identify;
