@@ -9,6 +9,7 @@ class Metrilo_Admin_Settings extends WC_Integration {
     private static $initiated = false;
     public $import_chunk_size = 50;
     private $woo = false;
+    public $events_queue = [];
     private $possible_events = array(
         'view_product'     => 'View Product',
         'view_category'    => 'View Category',
@@ -19,8 +20,9 @@ class Metrilo_Admin_Settings extends WC_Integration {
         'checkout_start'   => 'Started Checkout',
         'identify'         => 'Identify calls'
     );
+    
     private $endpoint_domain = 'p.metrilo.com';
-    public  $tracking_endpoint_domain = 't.metrilo.com';
+    public  $tracking_endpoint_domain = 'trk.mtrl.me';
     
     private $activity_helper;
     private $api_client;
@@ -67,6 +69,8 @@ class Metrilo_Admin_Settings extends WC_Integration {
         $this->add_tag_to_every_customer = $this->get_option('add_tag_to_every_customer', '');
         $this->prefix_order_ids          = $this->get_option('prefix_order_ids', '');
         $this->http_or_https             = $this->get_option('http_or_https', 'https') == 'https' ? 'https' : 'http';
+        $this->accept_tracking           = true;
+        $this->tracking_library          = $this->initialize_metrilo_library();
         
         // initiate woocommerce hooks and activities
         add_action('woocommerce_init', array($this, 'on_woocommerce_init'));
@@ -76,7 +80,7 @@ class Metrilo_Admin_Settings extends WC_Integration {
     }
     
     public function on_woocommerce_init(){
-        $this->load_resources();
+        $this->load_helpers_and_data_models();
         
         // check if API token and Secret are both entered
         $this->check_for_keys();
@@ -85,21 +89,21 @@ class Metrilo_Admin_Settings extends WC_Integration {
         $this->ensure_hooks();
     }
     
-    public function load_resources() {
-        $this->activity_helper     = require_once(METRILO_ANALYTICS_PLUGIN_PATH . 'helpers/class.metrilo-activity.php');
-        $this->api_client          = require_once(METRILO_ANALYTICS_PLUGIN_PATH . 'helpers/class.metrilo-api-client.php');
+    public function load_helpers_and_data_models() {
+        $this->activity_helper     = include_once(METRILO_ANALYTICS_PLUGIN_PATH . 'helpers/class.metrilo-activity.php');
+        $this->api_client          = include_once(METRILO_ANALYTICS_PLUGIN_PATH . 'helpers/class.metrilo-api-client.php');
         
-        $this->customer_data       = require_once(METRILO_ANALYTICS_PLUGIN_PATH . 'models/class.metrilo-customer-data.php');
-        $this->customer_serializer = require_once(METRILO_ANALYTICS_PLUGIN_PATH . 'helpers/class.metrilo-customer-serializer.php');
+        $this->customer_data       = include_once(METRILO_ANALYTICS_PLUGIN_PATH . 'models/class.metrilo-customer-data.php');
+        $this->customer_serializer = include_once(METRILO_ANALYTICS_PLUGIN_PATH . 'helpers/class.metrilo-customer-serializer.php');
         
-        $this->category_data       = require_once(METRILO_ANALYTICS_PLUGIN_PATH . 'models/class.metrilo-category-data.php');
-        $this->category_serializer = require_once(METRILO_ANALYTICS_PLUGIN_PATH . 'helpers/class.metrilo-category-serializer.php');
+        $this->category_data       = include_once(METRILO_ANALYTICS_PLUGIN_PATH . 'models/class.metrilo-category-data.php');
+        $this->category_serializer = include_once(METRILO_ANALYTICS_PLUGIN_PATH . 'helpers/class.metrilo-category-serializer.php');
         
-        $this->product_data        = require_once(METRILO_ANALYTICS_PLUGIN_PATH . 'models/class.metrilo-product-data.php');
-        $this->product_serializer  = require_once(METRILO_ANALYTICS_PLUGIN_PATH . 'helpers/class.metrilo-product-serializer.php');
+        $this->product_data        = include_once(METRILO_ANALYTICS_PLUGIN_PATH . 'models/class.metrilo-product-data.php');
+        $this->product_serializer  = include_once(METRILO_ANALYTICS_PLUGIN_PATH . 'helpers/class.metrilo-product-serializer.php');
         
-        $this->order_data          = require_once(METRILO_ANALYTICS_PLUGIN_PATH . 'models/class.metrilo-order-data.php');
-        $this->order_serializer    = require_once(METRILO_ANALYTICS_PLUGIN_PATH . 'helpers/class.metrilo-order-serializer.php');
+        $this->order_data          = include_once(METRILO_ANALYTICS_PLUGIN_PATH . 'models/class.metrilo-order-data.php');
+        $this->order_serializer    = include_once(METRILO_ANALYTICS_PLUGIN_PATH . 'helpers/class.metrilo-order-serializer.php');
     }
     
     public function check_for_keys(){
@@ -128,9 +132,101 @@ class Metrilo_Admin_Settings extends WC_Integration {
     }
     
     public function ensure_hooks(){
+        // general tracking snipper hook
+        add_filter('wp_head', array($this, 'render_snippet'));
+        add_filter('wp_head', array($this, 'woocommerce_tracking'));
+        
         add_action('wp_ajax_metrilo_import', array($this, 'metrilo_import'));
-//        add_action('wp_ajax_admin_metrilo_import', array('Metrilo_Import', 'metrilo_import'));
         add_action('admin_menu', array($this, 'setup_admin_pages'));
+    }
+    
+    public function render_events(){
+        include_once(METRILO_ANALYTICS_PLUGIN_PATH . 'includes/tracking-events.php');
+    }
+    
+    public function render_snippet(){
+        // check if we should track data for this user (if user is available)
+        if( !is_admin() && is_user_logged_in()){
+            $user = wp_get_current_user();
+            if($user->roles && $this->ignore_for_roles){
+                foreach($user->roles as $r){
+                    if(in_array($r, $this->ignore_for_roles)){
+                        $this->accept_tracking = false;
+                    }
+                }
+            }
+        }
+        
+        // render the JS tracking code
+        include_once(METRILO_ANALYTICS_PLUGIN_PATH . 'views/metrilo-front-end-library.php');
+    }
+    
+    public function woocommerce_tracking(){
+        // check if woocommerce is installed
+//        if(class_exists('WooCommerce')){
+//            /** check certain tracking scenarios **/
+//
+//            // if visitor is viewing product
+//            if(!$this->single_item_tracked && is_product()){
+//                $product = $this->resolve_product(get_queried_object_id());
+//                $this->put_event_in_queue('track', 'view_product', $this->prepare_product_hash($product));
+//                $this->single_item_tracked = true;
+//            }
+//
+//            // if visitor is viewing product category
+//            if(!$this->single_item_tracked && is_product_category()){
+//                $this->put_event_in_queue('track', 'view_category', $this->prepare_category_hash(get_queried_object()));
+//                $this->single_item_tracked = true;
+//            }
+//
+//            // if visitor is viewing shopping cart page
+//            if(!$this->single_item_tracked && is_cart()){
+//                $this->put_event_in_queue('track', 'view_cart', array());
+//                $this->single_item_tracked = true;
+//            }
+//            // if visitor is anywhere in the checkout process
+//            if(!$this->single_item_tracked && is_order_received_page()){
+//
+//                $this->put_event_in_queue('track', 'pageview', 'Thank You');
+//                $this->single_item_tracked = true;
+//
+//            }elseif(!$this->single_item_tracked && function_exists('is_checkout_pay_page') && is_checkout_pay_page()){
+//                $this->put_event_in_queue('track', 'checkout_payment', array());
+//                $this->single_item_tracked = true;
+//            }elseif(!$this->single_item_tracked && is_checkout()){
+//                $this->put_event_in_queue('track', 'checkout_start', array());
+//                $this->single_item_tracked = true;
+//            }
+//        }
+        
+        // ** GENERIC WordPress tracking - doesn't require WooCommerce in order to work **//
+        
+        // if visitor is viewing homepage or any text page
+//        if(!$this->single_item_tracked && is_front_page()){
+//            $this->put_event_in_queue('track', 'pageview', 'Homepage');
+//            $this->single_item_tracked = true;
+//        }elseif(!$this->single_item_tracked && is_page()){
+//            $this->put_event_in_queue('track', 'pageview', get_the_title());
+//            $this->single_item_tracked = true;
+//        }
+        
+        // if visitor is viewing post
+//        if(!$this->single_item_tracked && is_single()){
+//            $post_id = get_the_id();
+//            $this->put_event_in_queue('track', 'view_article', array('id' => $post_id, 'name' => get_the_title(), 'url' => get_permalink($post_id)));
+//            $this->single_item_tracked = true;
+//        }
+        
+        // if nothing else is tracked - send pageview event
+//        if(!$this->single_item_tracked){
+//            $this->put_event_in_queue('pageview');
+//        }
+        
+        // check if there are events in the queue to be sent to Metrilo
+//        if($this->identify_call_data !== false) $this->render_identify();
+        if(count($this->events_queue) > 0) {
+            $this->render_events();
+        }
     }
     
     public function setup_admin_pages(){
@@ -139,11 +235,9 @@ class Metrilo_Admin_Settings extends WC_Integration {
     
     public function metrilo_import_page(){
         wp_enqueue_script('jquery');
-        $metrilo_import = require_once(METRILO_ANALYTICS_PLUGIN_PATH . 'class.metrilo-import.php');
-//        $metrilo_import->prepare_import();
+        $metrilo_import = include_once(METRILO_ANALYTICS_PLUGIN_PATH . 'class.metrilo-import.php');
         if(!empty($_GET['import'])){
             $metrilo_import->set_importing_mode(true);
-//            $metrilo_import->prepare_order_chunks($this->import_chunk_size);
         }
         $metrilo_import->output();
     }
@@ -206,22 +300,6 @@ class Metrilo_Admin_Settings extends WC_Integration {
         }
     }
     
-    private function serialize_import_records($records, $serializer) {
-        $serializedData = [];
-        foreach($records as $record) {
-            $serializedRecord = $serializer->serialize($record);
-            if ($serializedRecord) {
-                $serializedData[] = $serializedRecord;
-            }
-        }
-        
-        return $serializedData;
-    }
-    
-    private function error_logger($import_type, $serialized_data, $plugin_log_path) {
-        return error_log(json_encode(array($import_type => $serialized_data)) . PHP_EOL, 3, $plugin_log_path);
-    }
-    
     public function admin_keys_notice(){
         $message = 'Almost done! Just enter your Metrilo API key and secret';
         echo '<div class="updated"><p>'.$message.' <a href="'.admin_url('admin.php?page=wc-settings&tab=integration').'">here</a></p></div>';
@@ -239,103 +317,26 @@ class Metrilo_Admin_Settings extends WC_Integration {
      * Initialize integration settings form fields.
      */
     public function init_form_fields() {
-        
-        // initiate possible user roles from settings
-        $possible_ignore_roles = false;
-        
-        if(is_admin()){
-            global $wp_roles;
-            $possible_ignore_roles = array();
-            foreach($wp_roles->roles as $role => $stuff){
-                $possible_ignore_roles[$role] = $stuff['name'];
+        include_once(METRILO_ANALYTICS_PLUGIN_PATH . 'includes/form-fields.php');
+    }
+    
+    private function initialize_metrilo_library() {
+        return $this->tracking_endpoint_domain . '/tracking.js?token=' . $this->api_token;
+    }
+    
+    private function serialize_import_records($records, $serializer) {
+        $serializedData = [];
+        foreach($records as $record) {
+            $serializedRecord = $serializer->serialize($record);
+            if ($serializedRecord) {
+                $serializedData[] = $serializedRecord;
             }
         }
         
-        $this->form_fields = array(
-            'api_token' => array(
-                'title'             => __( 'API Token', 'metrilo-analytics' ),
-                'type'              => 'text',
-                'description'       => __( '<strong style="color: green;">(Required)</strong> Enter your Metrilo API token. You can find it under "Settings" in your Metrilo account.<br /> Don\'t have one? <a href="https://www.metrilo.com/signup?ref=woointegration" target="_blank">Sign-up for free</a> now, it only takes a few seconds.', 'metrilo-analytics' ),
-                'desc_tip'          => false,
-                'default'           => ''
-            ),
-            'api_secret' => array(
-                'title'             => __( 'API Secret', 'metrilo-analytics' ),
-                'type'              => 'text',
-                'description'       => __( '<strong style="color: green;">(Required)</strong> Enter your Metrilo API secret key.', 'metrilo-analytics' ),
-                'desc_tip'          => false,
-                'default'           => ''
-            )
-        );
-        
-        if($possible_ignore_roles){
-            $this->form_fields['ignore_for_roles'] = array(
-                'title'             => __( 'Ignore tracking for roles', 'metrilo-analytics' ),
-                'type'              => 'multiselect',
-                'description'       => __( '<strong style="color: #999;">(Optional)</strong> If you check any of the roles, tracking data will be ignored for WP users with this role', 'metrilo-analytics' ),
-                'desc_tip'          => false,
-                'default'           => '',
-                'options'           => $possible_ignore_roles
-            );
-        }
-        
-        $this->form_fields['ignore_for_events'] = array(
-            'title'             => __( 'Do not send the selected tracking events', 'metrilo-analytics' ),
-            'type'              => 'multiselect',
-            'description'       => __( '<strong style="color: #999;">(Optional)</strong> Tracking won\'t be sent for the selected events', 'metrilo-analytics' ),
-            'desc_tip'          => false,
-            'default'           => '',
-            'options'           => $this->possible_events
-        );
-        
-        $product_brand_taxonomy_options = array('none' => 'None');
-        foreach(wc_get_attribute_taxonomies() as $v){
-            $product_brand_taxonomy_options[$v->attribute_name] = $v->attribute_label;
-        }
-        
-        $this->form_fields['product_brand_taxonomy'] = array(
-            'title'             => __( 'Product brand attribute', 'metrilo-analytics' ),
-            'type'              => 'select',
-            'description'       => __( '<strong style="color: #999;">(Optional)</strong> If you check any of those attributes, it\'ll be synced with Metrilo as the product\'s brand' ),
-            'desc_tip'          => false,
-            'default'           => '',
-            'options'           => $product_brand_taxonomy_options
-        );
-        
-        $this->form_fields['send_roles_as_tags'] = array(
-            'title'             => __( 'Send user roles as tags', 'metrilo-analytics' ),
-            'type'              => 'checkbox',
-            'description'       => __( '<strong style="color: #999;">(Optional)</strong> If you check this, your user\'s roles will be sent to Metrilo as tags when they browse your website' ),
-            'desc_tip'          => false,
-            'label'             => 'Send roles as tags',
-            'default'           => false
-        );
-        
-        $this->form_fields['add_tag_to_every_customer'] = array(
-            'title'             => __( 'Add this tag to every customer', 'metrilo-analytics' ),
-            'type'              => 'text',
-            'description'       => __( '<strong style="color: #999;">(Optional)</strong> If you enter tag, it will be added to every customer synced with Metrilo' ),
-            'desc_tip'          => false,
-            'label'             => 'Add this tag to every customer in Metrilo',
-            'default'           => ''
-        );
-        
-        $this->form_fields['prefix_order_ids'] = array(
-            'title'             => __( 'Prefix order IDs with', 'metrilo-analytics' ),
-            'type'              => 'text',
-            'description'       => __( '<strong style="color: #999;">(Optional)</strong> If you enter a prefix, all your order IDs will be prefixed with it. Useful for multiple stores connected to one Metrilo account' ),
-            'desc_tip'          => false,
-            'label'	            => 'Prefix all your order IDs',
-            'default'           => ''
-        );
-        
-        $this->form_fields['http_or_https'] = array(
-            'title'             => __( 'Sync data to Metrilo with HTTPS', 'metrilo-analytics' ),
-            'type'              => 'select',
-            'description'       => __( '<strong style="color: #999;">(Optional)</strong> Set if data should be sent to Metrilo from your WooCommerce backend through HTTPS or HTTP' ),
-            'desc_tip'          => false,
-            'default'           => '',
-            'options'           => array('https' => 'Yes (HTTPS)', 'http' => 'No (HTTP)')
-        );
+        return $serializedData;
+    }
+    
+    private function error_logger($import_type, $serialized_data, $plugin_log_path) {
+        return error_log(json_encode(array($import_type => $serialized_data)) . PHP_EOL, 3, $plugin_log_path);
     }
 }
