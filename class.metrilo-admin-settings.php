@@ -6,11 +6,12 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 class Metrilo_Admin_Settings extends WC_Integration {
     
-    private static $initiated = false;
-    public $import_chunk_size = 50;
-    private $woo = false;
-    public $events_queue = [];
-    private $possible_events = array(
+    private static $initiated    = false;
+    private $single_item_tracked = false;
+    private $woo                 = false;
+    private $events_queue        = [];
+    private $identify_call_data  = false;
+    private $possible_events     = array(
         'view_product'     => 'View Product',
         'view_category'    => 'View Category',
         'view_article'     => 'View Article',
@@ -20,6 +21,7 @@ class Metrilo_Admin_Settings extends WC_Integration {
         'checkout_start'   => 'Started Checkout',
         'identify'         => 'Identify calls'
     );
+    public $import_chunk_size = 50;
     
     private $endpoint_domain = 'p.metrilo.com';
     public  $tracking_endpoint_domain = 'trk.mtrl.me';
@@ -140,8 +142,12 @@ class Metrilo_Admin_Settings extends WC_Integration {
         add_action('admin_menu', array($this, 'setup_admin_pages'));
     }
     
+    public function render_identify(){
+        include_once(METRILO_ANALYTICS_PLUGIN_PATH . 'views/render-identify.php');
+    }
+    
     public function render_events(){
-        include_once(METRILO_ANALYTICS_PLUGIN_PATH . 'includes/tracking-events.php');
+        include_once(METRILO_ANALYTICS_PLUGIN_PATH . 'views/render-tracking-events.php');
     }
     
     public function render_snippet(){
@@ -162,71 +168,32 @@ class Metrilo_Admin_Settings extends WC_Integration {
     }
     
     public function woocommerce_tracking(){
-        // check if woocommerce is installed
-//        if(class_exists('WooCommerce')){
-//            /** check certain tracking scenarios **/
-//
-//            // if visitor is viewing product
-//            if(!$this->single_item_tracked && is_product()){
-//                $product = $this->resolve_product(get_queried_object_id());
-//                $this->put_event_in_queue('track', 'view_product', $this->prepare_product_hash($product));
-//                $this->single_item_tracked = true;
-//            }
-//
-//            // if visitor is viewing product category
-//            if(!$this->single_item_tracked && is_product_category()){
-//                $this->put_event_in_queue('track', 'view_category', $this->prepare_category_hash(get_queried_object()));
-//                $this->single_item_tracked = true;
-//            }
-//
-//            // if visitor is viewing shopping cart page
-//            if(!$this->single_item_tracked && is_cart()){
-//                $this->put_event_in_queue('track', 'view_cart', array());
-//                $this->single_item_tracked = true;
-//            }
-//            // if visitor is anywhere in the checkout process
-//            if(!$this->single_item_tracked && is_order_received_page()){
-//
-//                $this->put_event_in_queue('track', 'pageview', 'Thank You');
-//                $this->single_item_tracked = true;
-//
-//            }elseif(!$this->single_item_tracked && function_exists('is_checkout_pay_page') && is_checkout_pay_page()){
-//                $this->put_event_in_queue('track', 'checkout_payment', array());
-//                $this->single_item_tracked = true;
-//            }elseif(!$this->single_item_tracked && is_checkout()){
-//                $this->put_event_in_queue('track', 'checkout_start', array());
-//                $this->single_item_tracked = true;
-//            }
-//        }
-        
-        // ** GENERIC WordPress tracking - doesn't require WooCommerce in order to work **//
-        
-        // if visitor is viewing homepage or any text page
-//        if(!$this->single_item_tracked && is_front_page()){
-//            $this->put_event_in_queue('track', 'pageview', 'Homepage');
-//            $this->single_item_tracked = true;
-//        }elseif(!$this->single_item_tracked && is_page()){
-//            $this->put_event_in_queue('track', 'pageview', get_the_title());
-//            $this->single_item_tracked = true;
-//        }
-        
-        // if visitor is viewing post
-//        if(!$this->single_item_tracked && is_single()){
-//            $post_id = get_the_id();
-//            $this->put_event_in_queue('track', 'view_article', array('id' => $post_id, 'name' => get_the_title(), 'url' => get_permalink($post_id)));
-//            $this->single_item_tracked = true;
-//        }
-        
-        // if nothing else is tracked - send pageview event
-//        if(!$this->single_item_tracked){
-//            $this->put_event_in_queue('pageview');
-//        }
-        
-        // check if there are events in the queue to be sent to Metrilo
-//        if($this->identify_call_data !== false) $this->render_identify();
-        if(count($this->events_queue) > 0) {
-            $this->render_events();
+//         check if woocommerce is installed
+        include_once(METRILO_ANALYTICS_PLUGIN_PATH . 'includes/tracking-events.php');
+    }
+    
+    public function resolve_product($product_id) {
+        if (function_exists('wc_get_product')) {
+            return wc_get_product($product_id);
         }
+    }
+    
+    public function put_event_in_queue($event){
+        if ($this->check_if_event_should_be_ignored($event)) {
+            return true;
+        }
+        
+        array_push($this->events_queue, $event);
+    }
+    
+    public function check_if_event_should_be_ignored($event) {
+        if (empty($this->ignore_for_events)) {
+            return false;
+        }
+        if (in_array($event, $this->ignore_for_events)) {
+            return true;
+        }
+        return false;
     }
     
     public function setup_admin_pages(){
