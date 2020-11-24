@@ -1,6 +1,5 @@
 <?php
     // initiate possible user roles from settings
-    $possible_ignore_roles = false;
     
     if(is_admin()){
         global $wp_roles;
@@ -27,16 +26,14 @@
         )
     );
     
-    if($possible_ignore_roles){
-        $this->form_fields['ignore_for_roles'] = array(
-            'title'             => __( 'Ignore tracking for roles', 'metrilo-analytics' ),
-            'type'              => 'multiselect',
-            'description'       => __( '<strong style="color: #999;">(Optional)</strong> If you check any of the roles, tracking data will be ignored for WP users with this role', 'metrilo-analytics' ),
-            'desc_tip'          => false,
-            'default'           => '',
-            'options'           => $possible_ignore_roles
-        );
-    }
+    $this->form_fields['ignore_for_roles'] = array(
+        'title'             => __( 'Ignore tracking for roles', 'metrilo-analytics' ),
+        'type'              => 'multiselect',
+        'description'       => __( '<strong style="color: #999;">(Optional)</strong> If you check any of the roles, tracking data will be ignored for WP users with this role', 'metrilo-analytics' ),
+        'desc_tip'          => false,
+        'default'           => '',
+        'options'           => $possible_ignore_roles
+    );
     
     $this->form_fields['ignore_for_events'] = array(
         'title'             => __( 'Do not send the selected tracking events', 'metrilo-analytics' ),
@@ -96,3 +93,4 @@
         'default'           => '',
         'options'           => array('https' => 'Yes (HTTPS)', 'http' => 'No (HTTP)')
     );
+    

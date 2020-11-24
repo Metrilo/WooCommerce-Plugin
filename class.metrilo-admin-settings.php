@@ -9,7 +9,6 @@ if ( ! class_exists( 'Metrilo_Admin_Settings' ) ) {
     {
         
         private static $initiated = false;
-        private $single_item_tracked = false;
         private $woo = false;
         private $events_queue = [];
         private $has_events_in_cookie = false;
@@ -133,7 +132,6 @@ if ( ! class_exists( 'Metrilo_Admin_Settings' ) ) {
                     $secret = trim($_POST['woocommerce_metrilo-analytics_api_secret']);
                     
                     if (!empty($key) && !empty($secret)) {
-                        # submit to Metrilo to validate credentialswq
                         $response = $this->activity_helper->create_activity('integrated');
                         
                         if ($response) {
@@ -200,7 +198,6 @@ if ( ! class_exists( 'Metrilo_Admin_Settings' ) ) {
         
         public function woocommerce_tracking()
         {
-//         check if woocommerce is installed
             include_once(METRILO_ANALYTICS_PLUGIN_PATH . 'includes/tracking-events.php');
         }
         
