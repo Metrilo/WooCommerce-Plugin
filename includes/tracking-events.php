@@ -1,7 +1,6 @@
 <?php
     if(class_exists('WooCommerce')){
-//            /** check certain tracking scenarios **/
-//
+        // /** check certain tracking scenarios **/
         // if visitor is viewing product
         if(!$this->single_item_tracked && is_product()){
             $product = $this->resolve_product(get_queried_object_id());
@@ -74,10 +73,10 @@
             $this->single_item_tracked = true;
         }
     }
-//
-//         ** GENERIC WordPress tracking - doesn't require WooCommerce in order to work **//
-//
-//         if visitor is viewing homepage or any text page
+    //
+    //  ** GENERIC WordPress tracking - doesn't require WooCommerce in order to work **//
+    //
+    //  if visitor is viewing homepage or any text page
     if (!$this->single_item_tracked && is_front_page()) {
         $this->put_event_in_queue(
             "window.metrilo.viewPage('"
@@ -98,7 +97,7 @@
         $this->single_item_tracked = true;
     }
 
-//         if visitor is viewing post
+    //  if visitor is viewing post
     if (!$this->single_item_tracked && is_single()) {
         $post_id = get_the_id();
         $this->put_event_in_queue(
@@ -110,13 +109,8 @@
         );
         $this->single_item_tracked = true;
     }
-
-//         if nothing else is tracked - send pageview event
-//        if (!$this->single_item_tracked) {
-//            $this->put_event_in_queue('pageview');
-//        }
-
-//         check if there are events in the queue to be sent to Metrilo
+    
+    //  check if there are events in the queue to be sent to Metrilo
     if ($this->identify_call_data !== false) {
         $this->render_identify();
     }
