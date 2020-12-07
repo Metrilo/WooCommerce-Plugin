@@ -875,7 +875,7 @@ class Metrilo_Woo_Analytics_Integration extends WC_Integration {
         // send backend call with the order
         $this->send_api_call($uid, 'order', $purchase_params, $identity_data, $order_time_in_ms, $call_params);
         // put the order and identify data in cookies
-        $this->session_set($this->get_do_identify_cookie_name(), json_encode($this->identify_call_data));
+        $this->session_set($this->get_do_identify_cookie_name(), wp_json_encode($this->identify_call_data, JSON_UNESCAPED_UNICODE));
     }
 
     public function check_for_multi_currency($purchase_params){
