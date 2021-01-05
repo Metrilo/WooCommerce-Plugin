@@ -15,7 +15,7 @@ class Metrilo_Customer_Data
     public function get_customers($chunk_id)
     {
         $customers  = [];
-        $user_ids = get_users( array( 'fields' => array( 'ID' ), 'number' => $this->chunk_items, 'offset' => $chunk_id) );
+        $user_ids = get_users(['fields' => ['ID'], 'number' => $this->chunk_items, 'offset' => $chunk_id]);
         
         foreach ($user_ids as $user_id) {
             $customer_data = get_userdata((int)$user_id->ID);

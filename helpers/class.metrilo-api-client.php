@@ -13,7 +13,6 @@ class Metrilo_Api_Client {
         $platform       = 'Wordpress ' . get_bloginfo( 'version' );
         $plugin_version = METRILO_ANALYTICS_PLUGIN_VERSION;
         $api_end_point  = 'https://tracking.metrilo.com';
-//        $api_end_point  = 'https://trk.mtrl.me';
         
         return new Metrilo_Client($token, $platform, $plugin_version, $api_end_point, METRILO_ANALYTICS_PLUGIN_PATH);
     }

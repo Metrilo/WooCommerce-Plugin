@@ -11,10 +11,7 @@ class Metrilo_Order_Serializer
         $order_products = [];
         
         foreach ($order_items as $order_item) {
-            $item_type = $order_item->get_type();
-//            if ($item_type == 'configurable' || $item_type == 'bundle') { // exclude configurable/bundle parent product returned by getAllItems() method
-//                continue;
-//            }
+        
             $order_products[] = [
                 'productId' => (string)$order_item->get_product_id(),
                 'quantity'  => $order_item->get_quantity()

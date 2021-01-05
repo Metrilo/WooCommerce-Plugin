@@ -1,9 +1,8 @@
 <?php
-    // initiate possible user roles from settings
+    $possible_ignore_roles = array();
     
     if(is_admin()){
         global $wp_roles;
-        $possible_ignore_roles = array();
         foreach($wp_roles->roles as $role => $stuff){
             $possible_ignore_roles[$role] = $stuff['name'];
         }

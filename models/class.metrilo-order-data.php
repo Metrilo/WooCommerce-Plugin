@@ -17,10 +17,10 @@ class Metrilo_Order_Data
         $orders = [];
         $order_ids = $this->db_connection->get_col(
             "SELECT id FROM {$this->db_connection->posts}
-        WHERE post_type = 'shop_order'
-        ORDER BY id ASC
-        limit {$this->chunk_items}
-        offset {$chunk_id}"
+            WHERE post_type = 'shop_order'
+            ORDER BY id ASC
+            limit {$this->chunk_items}
+            offset {$chunk_id}"
         );
         
         foreach ($order_ids as $order_id) {
@@ -34,7 +34,7 @@ class Metrilo_Order_Data
     {
         $this->orders_total = (int)$this->db_connection->get_var(
             "SELECT count(id) FROM {$this->db_connection->posts}
-        WHERE post_type = 'shop_order' ORDER BY id ASC"
+            WHERE post_type = 'shop_order' ORDER BY id ASC"
         );
         
         return (int)ceil($this->orders_total / $this->chunk_items);
