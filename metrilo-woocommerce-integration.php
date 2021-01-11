@@ -33,7 +33,7 @@ if ( ! class_exists( 'Metrilo_Analytics' ) ) :
             // Checks if WooCommerce is installed and activated.
             if ( class_exists( 'WC_Integration' ) ) {
                 // Include our integration class.
-                include_once 'class.metrilo-admin-settings.php';
+                include_once 'integration.php';
                 
                 // Register the integration.
                 add_filter( 'woocommerce_integrations', array( $this, 'add_integration' ) );
@@ -57,7 +57,7 @@ if ( ! class_exists( 'Metrilo_Analytics' ) ) :
         }
         
         public function add_integration($integrations){
-            $integrations[] = 'Metrilo_Admin_Settings';
+            $integrations[] = 'Metrilo_Integration';
             return $integrations;
         }
         

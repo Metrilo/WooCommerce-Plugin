@@ -4,8 +4,8 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit; // Exit if accessed directly
 }
 
-if ( ! class_exists( 'Metrilo_Admin_Settings' ) ) {
-    class Metrilo_Admin_Settings extends WC_Integration
+if ( ! class_exists( 'Metrilo_Integration' ) ) {
+    class Metrilo_Integration extends WC_Integration
     {
         private $woo = false;
         private $events_queue = [];
@@ -94,7 +94,7 @@ if ( ! class_exists( 'Metrilo_Admin_Settings' ) ) {
             
             // hook to WooCommerce models
             $this->ensure_hooks();
-    
+            
             // ensure identification
             $this->ensure_identify();
             
@@ -154,14 +154,14 @@ if ( ! class_exists( 'Metrilo_Admin_Settings' ) ) {
             // background events tracking
             add_action('woocommerce_add_to_cart', array($this, 'add_to_cart'), 10, 6);
             add_action('woocommerce_remove_cart_item', array($this, 'remove_from_cart'), 10);
-    
+            
             // hook on new order placed
             add_action('woocommerce_checkout_order_processed', array($this, 'new_order_event'), 10);
             
             add_action('wp_ajax_metrilo_import', array($this, 'metrilo_import'));
             add_action('admin_menu', array($this, 'setup_admin_pages'));
         }
-    
+        
         public function ensure_identify(){
             // if user is logged in
             if( !is_admin() && is_user_logged_in() && !( $this->session_get( $this->get_identify_cookie_name() ) ) ){
@@ -248,7 +248,7 @@ if ( ! class_exists( 'Metrilo_Admin_Settings' ) ) {
                 $this->put_event_in_cookie_queue("window.metrilo.removeFromCart('$product_id', $quantity);");
             }
         }
-    
+        
         public function new_order_event($order_id) {
             try {
                 // fetch the order
@@ -256,7 +256,7 @@ if ( ! class_exists( 'Metrilo_Admin_Settings' ) ) {
                 $serialized_order         = $this->order_serializer->serialize($order);
                 $client                   = $this->api_client->get_client();
                 $this->identify_call_data = $order->get_billing_email();
-    
+                
                 $client->order($serialized_order);
                 $this->session_set(
                     $this->get_do_identify_cookie_name(),
