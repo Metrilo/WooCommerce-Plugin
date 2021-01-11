@@ -11,6 +11,7 @@ if ( ! class_exists( 'Metrilo_Admin_Settings' ) ) {
         private $events_queue = [];
         private $has_events_in_cookie = false;
         private $identify_call_data = false;
+        private $user_tags = false;
         private $possible_events = array(
             'view_product' => 'View Product',
             'view_category' => 'View Category',
@@ -21,6 +22,7 @@ if ( ! class_exists( 'Metrilo_Admin_Settings' ) ) {
             'checkout_start' => 'Started Checkout',
             'identify' => 'Identify calls'
         );
+        private $plugin_log_path = METRILO_ANALYTICS_PLUGIN_PATH . 'Metrilo_Analytics.log';
         
         public $import_chunk_size = 50;
         public $tracking_endpoint_domain = 'trk.mtrl.me';
@@ -92,6 +94,9 @@ if ( ! class_exists( 'Metrilo_Admin_Settings' ) ) {
             
             // hook to WooCommerce models
             $this->ensure_hooks();
+    
+            // ensure identification
+            $this->ensure_identify();
             
             // process cookie events
             $this->process_cookie_events();
@@ -149,9 +154,28 @@ if ( ! class_exists( 'Metrilo_Admin_Settings' ) ) {
             // background events tracking
             add_action('woocommerce_add_to_cart', array($this, 'add_to_cart'), 10, 6);
             add_action('woocommerce_remove_cart_item', array($this, 'remove_from_cart'), 10);
+    
+            // hook on new order placed
+            add_action('woocommerce_checkout_order_processed', array($this, 'new_order_event'), 10);
             
             add_action('wp_ajax_metrilo_import', array($this, 'metrilo_import'));
             add_action('admin_menu', array($this, 'setup_admin_pages'));
+        }
+    
+        public function ensure_identify(){
+            // if user is logged in
+            if( !is_admin() && is_user_logged_in() && !( $this->session_get( $this->get_identify_cookie_name() ) ) ){
+                $user       = wp_get_current_user();
+                $user_roles = $user->roles;
+                $this->identify_call_data = $user->user_email;
+                
+                // check if roles should be sent and if they exist
+                if($this->send_roles_as_tags == 'yes' && !empty($user_roles)){
+                    $this->user_tags = $user_roles;
+                    $this->session_set($this->get_identify_cookie_name(), $user_roles);
+                }
+                $this->session_set($this->get_identify_cookie_name(), 'true');
+            }
         }
         
         public function render_identify()
@@ -224,6 +248,24 @@ if ( ! class_exists( 'Metrilo_Admin_Settings' ) ) {
                 $this->put_event_in_cookie_queue("window.metrilo.removeFromCart('$product_id', $quantity);");
             }
         }
+    
+        public function new_order_event($order_id) {
+            try {
+                // fetch the order
+                $order                    = new WC_Order($order_id);
+                $serialized_order         = $this->order_serializer->serialize($order);
+                $client                   = $this->api_client->get_client();
+                $this->identify_call_data = $order->get_billing_email();
+    
+                $client->order($serialized_order);
+                $this->session_set(
+                    $this->get_do_identify_cookie_name(),
+                    wp_json_encode($this->identify_call_data, JSON_UNESCAPED_UNICODE)
+                );
+            } catch(\Exception $e) {
+                $this->error_logger('new_order_event ', $e->getMessage(), $this->plugin_log_path);
+            }
+        }
         
         public function resolve_product($product_id)
         {
@@ -290,7 +332,7 @@ if ( ! class_exists( 'Metrilo_Admin_Settings' ) ) {
         public function add_item_to_cookie($data)
         {
             $items = $this->get_items_in_cookie();
-            if (empty($items)) $items = array();
+            if (empty($items)) $items = [];
             array_push($items, $data);
             $encoded_items = json_encode($items);
             $this->session_set($this->get_cookie_name(), $encoded_items);
@@ -309,7 +351,7 @@ if ( ! class_exists( 'Metrilo_Admin_Settings' ) ) {
         
         public function get_identify_data_in_cookie()
         {
-            $identify = array();
+            $identify = [];
             $data = $this->session_get($this->get_do_identify_cookie_name());
             if (!empty($data)) {
                 $identify = json_decode($data, true);
@@ -319,8 +361,8 @@ if ( ! class_exists( 'Metrilo_Admin_Settings' ) ) {
         
         public function clear_items_in_cookie()
         {
-            $this->session_set($this->get_cookie_name(), json_encode(array()));
-            $this->session_set($this->get_do_identify_cookie_name(), json_encode(array()));
+            $this->session_set($this->get_cookie_name(), json_encode([]));
+            $this->session_set($this->get_do_identify_cookie_name(), json_encode([]));
         }
         
         public function get_order_ip($order_id)
@@ -377,7 +419,6 @@ if ( ! class_exists( 'Metrilo_Admin_Settings' ) ) {
         public function metrilo_import()
         {
             $result = false;
-            $plugin_log_path = METRILO_ANALYTICS_PLUGIN_PATH . 'Metrilo_Analytics.log';
             
             try {
                 $chunk_id = (int)$_REQUEST['chunkId'];
@@ -391,12 +432,10 @@ if ( ! class_exists( 'Metrilo_Admin_Settings' ) ) {
                         }
                         $serialized_customers = $this->serialize_import_records($this->customer_data->get_customers($chunk_id), $this->customer_serializer);
                         $result               = $client->customerBatch($serialized_customers);
-                        $this->error_logger('serializedCustomers ', $serialized_customers, $plugin_log_path);
                         break;
                     case 'categories':
                         $serialized_categories = $this->serialize_import_records($this->category_data->get_categories($chunk_id), $this->category_serializer);
                         $result                = $client->categoryBatch($serialized_categories);
-                        $this->error_logger('serializedCategories ', $serialized_categories, $plugin_log_path);
                         break;
                     case 'deletedProducts':
 //                    $deletedProductOrders = $this->_deletedProductOrderObject->getDeletedProductOrders($storeId);
@@ -411,12 +450,10 @@ if ( ! class_exists( 'Metrilo_Admin_Settings' ) ) {
                     case 'products':
                         $serialized_products = $this->serialize_import_records($this->product_data->get_products($chunk_id), $this->product_serializer);
                         $result              = $client->productBatch($serialized_products);
-                        $this->error_logger('serializedProducts ', $serialized_products, $plugin_log_path);
                         break;
                     case 'orders':
                         $serialized_orders = $this->serialize_import_records($this->order_data->get_orders($chunk_id), $this->order_serializer);
                         $result            = $client->orderBatch($serialized_orders);
-                        $this->error_logger('serializedOrders ', $serialized_orders, $plugin_log_path);
                         if ($chunk_id == (int)$_REQUEST['ordersChunks'] - 1) {
                             $this->activity_helper->create_activity('import_end');
                         }
@@ -429,7 +466,7 @@ if ( ! class_exists( 'Metrilo_Admin_Settings' ) ) {
                 wp_die();
                 
             } catch (\Exception $e) {
-                $this->error_logger('metrilo_import ', $e->getMessage(), $plugin_log_path);
+                $this->error_logger('metrilo_import ', $e->getMessage(), $this->plugin_log_path);
             }
         }
         
@@ -455,6 +492,10 @@ if ( ! class_exists( 'Metrilo_Admin_Settings' ) ) {
         public function init_form_fields()
         {
             include_once(METRILO_ANALYTICS_PLUGIN_PATH . 'includes/form-fields.php');
+        }
+        
+        private function stringIsPresent($string){
+            return trim($string) != null;
         }
         
         private function get_cookie_name()
