@@ -1,1 +1,1 @@
-<script type="text/javascript" src="<?php echo '//'. $this->tracking_library; ?>"></script>
+<script type="text/javascript" async="true" src="<?php echo '//'. $this->tracking_library; ?>"></script>
