@@ -11,7 +11,7 @@ if ( ! class_exists( 'Metrilo_Integration' ) ) {
         private $events_queue = [];
         private $has_events_in_cookie = false;
         private $identify_call_data = false;
-        private $user_tags = false;
+        private $user_tags = [];
         private $possible_events = array(
             'view_product' => 'View Product',
             'view_category' => 'View Category',
@@ -68,7 +68,7 @@ if ( ! class_exists( 'Metrilo_Integration' ) ) {
             $this->ignore_for_roles = $this->get_option('ignore_for_roles', false);
             $this->ignore_for_events = $this->get_option('ignore_for_events', false);
             $this->product_brand_taxonomy = $this->get_option('product_brand_taxonomy', 'none');
-            $this->send_roles_as_tags = $this->get_option('send_roles_as_tags', 'no');
+            $this->send_roles_as_tags = $this->get_option('send_roles_as_tags', false);
             $this->add_tag_to_every_customer = $this->get_option('add_tag_to_every_customer', '');
             $this->prefix_order_ids = $this->get_option('prefix_order_ids', '');
             $this->http_or_https = $this->get_option('http_or_https', 'https') == 'https' ? 'https' : 'http';
@@ -254,7 +254,7 @@ if ( ! class_exists( 'Metrilo_Integration' ) ) {
                 // fetch the order
                 $order                    = new WC_Order($order_id);
                 $serialized_order         = $this->order_serializer->serialize($order);
-                $client                   = $this->api_client->get_client();
+                $client                   = $this->api_client->get_client($this->tracking_endpoint_domain);
                 $this->identify_call_data = $order->get_billing_email();
                 
                 $client->order($serialized_order);
@@ -423,7 +423,7 @@ if ( ! class_exists( 'Metrilo_Integration' ) ) {
             try {
                 $chunk_id = (int)$_REQUEST['chunkId'];
                 $import_type = (string)$_REQUEST['importType'];
-                $client = $this->api_client->get_client();
+                $client = $this->api_client->get_client($this->tracking_endpoint_domain);
                 
                 switch ($import_type) {
                     case 'customers':
@@ -463,8 +463,6 @@ if ( ! class_exists( 'Metrilo_Integration' ) ) {
                         break;
                 }
                 return json_encode($result);
-                wp_die();
-                
             } catch (\Exception $e) {
                 $this->error_logger('metrilo_import ', $e->getMessage(), $this->plugin_log_path);
             }
@@ -492,10 +490,6 @@ if ( ! class_exists( 'Metrilo_Integration' ) ) {
         public function init_form_fields()
         {
             include_once(METRILO_ANALYTICS_PLUGIN_PATH . 'includes/form-fields.php');
-        }
-        
-        private function stringIsPresent($string){
-            return trim($string) != null;
         }
         
         private function get_cookie_name()
