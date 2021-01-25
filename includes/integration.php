@@ -169,7 +169,6 @@ if ( ! class_exists( 'Metrilo_Integration' ) ) {
         }
         
         public function ensure_identify(){
-            // if user is logged in
             if(is_admin() && !is_user_logged_in() && $this->session_get($this->get_identify_cookie_name())){
                 return;
             }
