@@ -19,7 +19,7 @@ class Metrilo_Order_Data
             $this->db_connection->prepare(
         "
                 SELECT id
-                FROM {$this->db_connection->posts}
+                FROM $this->db_connection->posts
                 WHERE post_type = 'shop_order'
                 ORDER BY id ASC
                 limit '%d'
