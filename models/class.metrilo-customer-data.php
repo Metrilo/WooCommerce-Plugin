@@ -30,7 +30,13 @@ class Metrilo_Customer_Data
     public function get_customer_chunks()
     {
         $this->customers_total = (int)$this->db_connection->get_var(
-            "SELECT count(id) FROM {$this->db_connection->users} ORDER BY id ASC"
+            $this->db_connection->prepare(
+                "
+                SELECT count(id)
+                FROM $this->db_connection->users
+                ORDER BY id ASC
+                "
+            )
         );
         
         return (int)ceil($this->customers_total / $this->chunk_items);

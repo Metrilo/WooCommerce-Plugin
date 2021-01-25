@@ -16,11 +16,18 @@ class Metrilo_Order_Data
     {
         $orders = [];
         $order_ids = $this->db_connection->get_col(
-            "SELECT id FROM {$this->db_connection->posts}
-            WHERE post_type = 'shop_order'
-            ORDER BY id ASC
-            limit {$this->chunk_items}
-            offset {$chunk_id}"
+            $this->db_connection->prepare(
+        "
+                SELECT id
+                FROM {$this->db_connection->posts}
+                WHERE post_type = 'shop_order'
+                ORDER BY id ASC
+                limit '%d'
+                offset '%d'
+                ",
+                $chunk_id,
+                $this->chunk_items
+            )
         );
         
         foreach ($order_ids as $order_id) {
@@ -33,8 +40,14 @@ class Metrilo_Order_Data
     public function get_order_chunks()
     {
         $this->orders_total = (int)$this->db_connection->get_var(
-            "SELECT count(id) FROM {$this->db_connection->posts}
-            WHERE post_type = 'shop_order' ORDER BY id ASC"
+            $this->db_connection->prepare(
+                "
+                SELECT count(id)
+                FROM $this->db_connection->posts
+                WHERE post_type = 'shop_order'
+                ORDER BY id ASC
+                "
+            )
         );
         
         return (int)ceil($this->orders_total / $this->chunk_items);

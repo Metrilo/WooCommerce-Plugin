@@ -16,10 +16,17 @@ class Metrilo_Product_Data
     {
         $products = [];
         $product_ids = $this->db_connection->get_col(
-            "SELECT id FROM {$this->db_connection->posts}
-            WHERE post_type = 'product'
-            limit {$this->chunk_items}
-            offset {$chunk_id}"
+            $this->db_connection->prepare(
+                "
+                SELECT id
+                FROM $this->db_connection->posts
+                WHERE post_type = 'product'
+                limit '%d'
+                offset '%d'
+                ",
+                $this->chunk_items,
+                $chunk_id
+            )
         );
         
         foreach ($product_ids as $product_id) {
@@ -32,8 +39,13 @@ class Metrilo_Product_Data
     public function get_product_chunks()
     {
         $this->products_total = (int)$this->db_connection->get_var(
-            "SELECT count(id) FROM {$this->db_connection->posts}
-            WHERE post_type = 'product' ORDER BY id ASC"
+            $this->db_connection->prepare(
+            "
+                SELECT count(id)
+                FROM $this->db_connection->posts
+                WHERE post_type = 'product' ORDER BY id ASC
+                "
+            )
         );
         
         return (int)ceil($this->products_total / $this->chunk_items);
