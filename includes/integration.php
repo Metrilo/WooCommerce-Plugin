@@ -122,25 +122,31 @@ if ( ! class_exists( 'Metrilo_Integration' ) ) {
         
         public function check_for_keys()
         {
-            if (is_admin()) {
-                if ((empty($this->api_token) || empty($this->api_secret)) && empty($_POST['save'])) {
-                    add_action('admin_notices', array($this, 'admin_keys_notice'));
-                }
-                
-                if (!empty($_POST['save'])) {
-                    $key = trim($_POST['woocommerce_metrilo-analytics_api_token']);
-                    $secret = trim($_POST['woocommerce_metrilo-analytics_api_secret']);
-                    
-                    if (!empty($key) && !empty($secret)) {
-                        $response = $this->activity_helper->create_activity('integrated');
-                        
-                        if ($response) {
-                            add_action('admin_notices', array($this, 'admin_import_invite'));
-                        } else {
-                            WC_Admin_Settings::add_error($this->admin_import_error_message());
-                        }
-                    }
-                }
+            if (!is_admin()) {
+                return;
+            }
+            
+            if ((empty($this->api_token) || empty($this->api_secret)) && empty($_POST['save'])) {
+                add_action('admin_notices', array($this, 'admin_keys_notice'));
+            }
+            
+            if (!empty($_POST['save'])) {
+                return;
+            }
+            
+            $key = trim($_POST['woocommerce_metrilo-analytics_api_token']);
+            $secret = trim($_POST['woocommerce_metrilo-analytics_api_secret']);
+            
+            if (!empty($key) && !empty($secret)) {
+                return;
+            }
+            
+            $response = $this->activity_helper->create_activity('integrated');
+            
+            if ($response) {
+                add_action('admin_notices', array($this, 'admin_import_invite'));
+            } else {
+                WC_Admin_Settings::add_error($this->admin_import_error_message());
             }
         }
         
@@ -164,18 +170,20 @@ if ( ! class_exists( 'Metrilo_Integration' ) ) {
         
         public function ensure_identify(){
             // if user is logged in
-            if( !is_admin() && is_user_logged_in() && !( $this->session_get( $this->get_identify_cookie_name() ) ) ){
-                $user       = wp_get_current_user();
-                $user_roles = $user->roles;
-                $this->identify_call_data = $user->user_email;
-                
-                // check if roles should be sent and if they exist
-                if($this->send_roles_as_tags == 'yes' && !empty($user_roles)){
-                    $this->user_tags = $user_roles;
-                    $this->session_set($this->get_identify_cookie_name(), $user_roles);
-                }
-                $this->session_set($this->get_identify_cookie_name(), 'true');
+            if(is_admin() && !is_user_logged_in() && $this->session_get($this->get_identify_cookie_name())){
+                return;
             }
+            
+            $user       = wp_get_current_user();
+            $user_roles = $user->roles;
+            $this->identify_call_data = $user->user_email;
+            
+            // check if roles should be sent and if they exist
+            if($this->send_roles_as_tags == 'yes' && !empty($user_roles)){
+                $this->user_tags = $user_roles;
+                $this->session_set($this->get_identify_cookie_name(), $user_roles);
+            }
+            $this->session_set($this->get_identify_cookie_name(), 'true');
         }
         
         public function render_identify()
@@ -230,9 +238,8 @@ if ( ! class_exists( 'Metrilo_Integration' ) ) {
             $cart_item_data = false
         )
         {
-            $product_id = ($variation_id) ? $variation_id : $product_id;
-            $this->put_event_in_cookie_queue("window.metrilo.addToCart('$product_id', '$quantity');"
-            );
+            $product_id = $variation_id ? $variation_id : $product_id;
+            $this->put_event_in_cookie_queue("window.metrilo.addToCart('$product_id', '$quantity');");
         }
         
         public function remove_from_cart($key_id)
@@ -240,11 +247,11 @@ if ( ! class_exists( 'Metrilo_Integration' ) ) {
             if (!is_object($this->woo->cart)) {
                 return true;
             }
-            $cart_items = $this->woo->cart->get_cart();
-            $removed_cart_item = isset($cart_items[$key_id]) ? $cart_items[$key_id] : false;
+            $cart_items        = $this->woo->cart->get_cart();
+            $removed_cart_item = $cart_items[$key_id];
             if ($removed_cart_item) {
                 $product_id = $removed_cart_item['data']->get_id();
-                $quantity = (int)$removed_cart_item['quantity'];
+                $quantity   = (int)$removed_cart_item['quantity'];
                 $this->put_event_in_cookie_queue("window.metrilo.removeFromCart('$product_id', $quantity);");
             }
         }
@@ -276,31 +283,21 @@ if ( ! class_exists( 'Metrilo_Integration' ) ) {
         
         public function put_event_in_queue($event)
         {
-            if ($this->check_if_event_should_be_ignored($event)) {
-                return true;
+            if (!$this->check_if_event_should_be_ignored($event)) {
+                array_push($this->events_queue, $event);
             }
-            
-            array_push($this->events_queue, $event);
         }
         
         public function put_event_in_cookie_queue($event)
         {
-            if ($this->check_if_event_should_be_ignored($event)) {
-                return true;
+            if (!$this->check_if_event_should_be_ignored($event)) {
+                $this->add_item_to_cookie($event);
             }
-            
-            $this->add_item_to_cookie($event);
         }
         
         public function check_if_event_should_be_ignored($event)
         {
-            if (empty($this->ignore_for_events)) {
-                return false;
-            }
-            if (in_array($event, $this->ignore_for_events)) {
-                return true;
-            }
-            return false;
+            return in_array($event, $this->ignore_for_events);
         }
         
         /**
@@ -324,9 +321,9 @@ if ( ! class_exists( 'Metrilo_Integration' ) ) {
             if (!is_object($this->woo->session)) {
                 @setcookie($k, $v, time() + 43200, COOKIEPATH, COOKIE_DOMAIN);
                 $_COOKIE[$k] = $v;
-                return true;
+            } else {
+                $this->woo->session->set($k, $v);
             }
-            return $this->woo->session->set($k, $v);
         }
         
         public function add_item_to_cookie($data)
@@ -436,16 +433,6 @@ if ( ! class_exists( 'Metrilo_Integration' ) ) {
                     case 'categories':
                         $serialized_categories = $this->serialize_import_records($this->category_data->get_categories($chunk_id), $this->category_serializer);
                         $result                = $client->categoryBatch($serialized_categories);
-                        break;
-                    case 'deletedProducts':
-//                    $deletedProductOrders = $this->_deletedProductOrderObject->getDeletedProductOrders($storeId);
-//                    if ($deletedProductOrders) {
-//                        $serializedDeletedProducts = Mage::helper('metrilo_analytics/deletedproductserializer')->serialize($deletedProductOrders);
-//                        $deletedProductChunks      = array_chunk($serializedDeletedProducts, Metrilo_Analytics_Helper_Data::chunkItems);
-//                        foreach($deletedProductChunks as $chunk) {
-//                            $client->productBatch($chunk);
-//                        }
-//                    }
                         break;
                     case 'products':
                         $serialized_products = $this->serialize_import_records($this->product_data->get_products($chunk_id), $this->product_serializer);
