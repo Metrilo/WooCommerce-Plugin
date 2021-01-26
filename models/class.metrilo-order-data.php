@@ -17,7 +17,7 @@ class Metrilo_Order_Data
         $orders = [];
         $order_ids = $this->db_connection->get_col(
             $this->db_connection->prepare(
-        "
+                "
                 SELECT id
                 FROM $this->db_connection->posts
                 WHERE post_type = 'shop_order'

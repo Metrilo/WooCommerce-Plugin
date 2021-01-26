@@ -40,7 +40,7 @@ class Metrilo_Product_Data
     {
         $this->products_total = (int)$this->db_connection->get_var(
             $this->db_connection->prepare(
-            "
+                "
                 SELECT count(id)
                 FROM $this->db_connection->posts
                 WHERE post_type = 'product' ORDER BY id ASC
