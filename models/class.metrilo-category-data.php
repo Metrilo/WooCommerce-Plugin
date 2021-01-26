@@ -23,8 +23,8 @@ class Metrilo_Category_Data
                 LEFT JOIN $this->db_connection->terms AS terms
                 ON term_taxonomy.term_id = terms.term_id
                 WHERE term_taxonomy.taxonomy = 'product_cat'
-                limit '%d'
-                offset '%d'
+                limit %d
+                offset %d
                 ",
                 $this->chunk_items,
                 $chunk_id
