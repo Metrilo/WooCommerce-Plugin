@@ -21,8 +21,8 @@ class Metrilo_Product_Data
                 SELECT id
                 FROM $this->db_connection->posts
                 WHERE post_type = 'product'
-                limit '%d'
-                offset '%d'
+                limit %d
+                offset %d
                 ",
                 $this->chunk_items,
                 $chunk_id

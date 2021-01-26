@@ -66,7 +66,7 @@ if ( ! class_exists( 'Metrilo_Integration' ) ) {
             $this->api_token = $this->get_option('api_token', false);
             $this->api_secret = $this->get_option('api_secret', false);
             $this->ignore_for_roles = $this->get_option('ignore_for_roles', false);
-            $this->ignore_for_events = $this->get_option('ignore_for_events', false);
+            $this->ignore_for_events = $this->get_option('ignore_for_events', []);
             $this->product_brand_taxonomy = $this->get_option('product_brand_taxonomy', 'none');
             $this->send_roles_as_tags = $this->get_option('send_roles_as_tags', false);
             $this->add_tag_to_every_customer = $this->get_option('add_tag_to_every_customer', '');

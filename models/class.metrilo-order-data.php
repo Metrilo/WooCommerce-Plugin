@@ -22,8 +22,8 @@ class Metrilo_Order_Data
                 FROM $this->db_connection->posts
                 WHERE post_type = 'shop_order'
                 ORDER BY id ASC
-                limit '%d'
-                offset '%d'
+                limit %d
+                offset %d
                 ",
                 $chunk_id,
                 $this->chunk_items

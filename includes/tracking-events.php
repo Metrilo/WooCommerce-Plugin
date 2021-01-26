@@ -54,7 +54,7 @@
         $this->put_event_in_queue("window.metrilo.viewArticle('$post_id', $name_and_url);");
     }
     
-    if ($this->identify_call_data !== false) {
+    if ($this->identify_call_data) {
         $this->render_identify();
     }
     
