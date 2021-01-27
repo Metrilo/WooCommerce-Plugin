@@ -24,8 +24,9 @@ if ( ! class_exists( 'Metrilo_Integration' ) ) {
         );
         private $plugin_log_path = METRILO_ANALYTICS_PLUGIN_PATH . 'Metrilo_Analytics.log';
         
-        public $import_chunk_size = 50;
+        public $import_chunk_size        = 50;
         public $tracking_endpoint_domain = 'trk.mtrl.me';
+        public $activity_enpoint_domain  = 'p.metrilo.com';
         
         private $activity_helper;
         private $api_client;
@@ -128,25 +129,28 @@ if ( ! class_exists( 'Metrilo_Integration' ) ) {
             
             if ((empty($this->api_token) || empty($this->api_secret)) && empty($_POST['save'])) {
                 add_action('admin_notices', array($this, 'admin_keys_notice'));
+                return;
             }
-            
-            if (!empty($_POST['save'])) {
+    
+            if(empty($_POST['save'])) {
                 return;
             }
             
             $key = trim($_POST['woocommerce_metrilo-analytics_api_token']);
             $secret = trim($_POST['woocommerce_metrilo-analytics_api_secret']);
             
-            if (!empty($key) && !empty($secret)) {
+            if(empty($key) || empty($secret)) {
                 return;
             }
             
-            $response = $this->activity_helper->create_activity('integrated');
+            $response = $this->activity_helper->create_activity('integrated', $this->activity_enpoint_domain);
             
             if ($response) {
                 add_action('admin_notices', array($this, 'admin_import_invite'));
             } else {
                 WC_Admin_Settings::add_error($this->admin_import_error_message());
+                $_POST['woocommerce_metrilo-woo-analytics_api_key'] = '';
+                $_POST['woocommerce_metrilo-woo-analytics_api_secret'] = '';
             }
         }
         
@@ -424,7 +428,7 @@ if ( ! class_exists( 'Metrilo_Integration' ) ) {
                 switch ($import_type) {
                     case 'customers':
                         if ($chunk_id == 0) {
-                            $this->activity_helper->create_activity('import_start');
+                            $this->activity_helper->create_activity('import_start', $this->activity_enpoint_domain);
                         }
                         $serialized_customers = $this->serialize_import_records($this->customer_data->get_customers($chunk_id), $this->customer_serializer);
                         $result               = $client->customerBatch($serialized_customers);
@@ -441,7 +445,7 @@ if ( ! class_exists( 'Metrilo_Integration' ) ) {
                         $serialized_orders = $this->serialize_import_records($this->order_data->get_orders($chunk_id), $this->order_serializer);
                         $result            = $client->orderBatch($serialized_orders);
                         if ($chunk_id == (int)$_REQUEST['ordersChunks'] - 1) {
-                            $this->activity_helper->create_activity('import_end');
+                            $this->activity_helper->create_activity('import_end', $this->activity_enpoint_domain);
                         }
                         break;
                     default:
