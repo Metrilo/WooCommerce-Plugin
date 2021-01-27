@@ -19,7 +19,7 @@ class Metrilo_Order_Data
             $this->db_connection->prepare(
                 "
                 SELECT id
-                FROM $this->db_connection->posts
+                FROM {$this->db_connection->posts}
                 WHERE post_type = 'shop_order'
                 ORDER BY id ASC
                 limit %d
@@ -40,14 +40,12 @@ class Metrilo_Order_Data
     public function get_order_chunks()
     {
         $this->orders_total = (int)$this->db_connection->get_var(
-            $this->db_connection->prepare(
-                "
-                SELECT count(id)
-                FROM $this->db_connection->posts
-                WHERE post_type = 'shop_order'
-                ORDER BY id ASC
-                "
-            )
+            "
+            SELECT count(id)
+            FROM {$this->db_connection->posts}
+            WHERE post_type = 'shop_order'
+            ORDER BY id ASC
+            "
         );
         
         return (int)ceil($this->orders_total / $this->chunk_items);

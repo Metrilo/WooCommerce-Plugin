@@ -19,8 +19,8 @@ class Metrilo_Category_Data
             $this->db_connection->prepare(
             "
                 SELECT term_taxonomy_id
-                FROM $this->db_connection->term_taxonomy AS term_taxonomy
-                LEFT JOIN $this->db_connection->terms AS terms
+                FROM {$this->db_connection->term_taxonomy}AS term_taxonomy
+                LEFT JOIN {$this->db_connection->terms} AS terms
                 ON term_taxonomy.term_id = terms.term_id
                 WHERE term_taxonomy.taxonomy = 'product_cat'
                 limit %d
@@ -41,15 +41,13 @@ class Metrilo_Category_Data
     public function get_category_chunks()
     {
         $this->categories_total = $this->db_connection->get_var(
-            $this->db_connection->prepare(
             "
                 SELECT count(term_taxonomy_id)
-                FROM $this->db_connection->term_taxonomy AS term_taxonomy
-                LEFT JOIN $this->db_connection->terms AS terms
+                FROM {$this->db_connection->term_taxonomy} AS term_taxonomy
+                LEFT JOIN {$this->db_connection->terms} AS terms
                 ON term_taxonomy.term_id = terms.term_id
                 WHERE term_taxonomy.taxonomy = 'product_cat'
                 "
-            )
         );
         
         return (int)ceil($this->categories_total / $this->chunk_items);

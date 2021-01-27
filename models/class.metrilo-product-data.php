@@ -19,7 +19,7 @@ class Metrilo_Product_Data
             $this->db_connection->prepare(
                 "
                 SELECT id
-                FROM $this->db_connection->posts
+                FROM {$this->db_connection->posts}
                 WHERE post_type = 'product'
                 limit %d
                 offset %d
@@ -39,13 +39,11 @@ class Metrilo_Product_Data
     public function get_product_chunks()
     {
         $this->products_total = (int)$this->db_connection->get_var(
-            $this->db_connection->prepare(
-                "
-                SELECT count(id)
-                FROM $this->db_connection->posts
-                WHERE post_type = 'product' ORDER BY id ASC
-                "
-            )
+            "
+            SELECT count(id)
+            FROM {$this->db_connection->posts}
+            WHERE post_type = 'product' ORDER BY id ASC
+            "
         );
         
         return (int)ceil($this->products_total / $this->chunk_items);
