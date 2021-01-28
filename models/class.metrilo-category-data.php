@@ -19,7 +19,7 @@ class Metrilo_Category_Data
             $this->db_connection->prepare(
             "
                 SELECT term_taxonomy_id
-                FROM {$this->db_connection->term_taxonomy}AS term_taxonomy
+                FROM {$this->db_connection->term_taxonomy} AS term_taxonomy
                 LEFT JOIN {$this->db_connection->terms} AS terms
                 ON term_taxonomy.term_id = terms.term_id
                 WHERE term_taxonomy.taxonomy = 'product_cat'
