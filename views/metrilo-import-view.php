@@ -10,10 +10,6 @@
         float: left;
     }
     
-    .metrilo-color-green {
-        color: green;
-    }
-    
     .metrilo-clear {
         clear: both;
     }
@@ -23,7 +19,12 @@
         font-size: 11px;
         padding: 5px;
     }
-    /* Add all styles from below html tags to this section */
+    
+    .metrilo-sync-done {
+        display: none;
+        color: green;
+        font-weight: bold;
+    }
 </style>
 <script>
     jQuery.noConflict();
@@ -44,7 +45,7 @@
             if (importType == 'customers' && chunkId == 0) {
                 jQuery('#metrilo_import_step').text('Importing customers');
             }
-
+            
             var progress_percents = Math.round(chunkId * dataOptions.percentage);
             update_importing_message('Please wait... ' + progress_percents + '% done', true);
 
@@ -93,20 +94,23 @@
             if (data[`${current}Chunks`] > 0) {
                 data.percentage = (100 / data[`${current}Chunks`]);
             }
+            
             var hasMoreChunks = newChunkId < data[`${current}Chunks`];
 
             if (hasMoreChunks) {
-                sync_chunk(newChunkId, data.importType, false);
-            } else {
-                if (current == 'orders') {
-                    update_importing_message("<span class='metrilo-color-green'>" + 'Done! Please expect up to 30 minutes for your historical data to appear in Metrilo.' + "</span>", true);
-                    jQuery('#metrilo_import_step').hide();
-                } else {
-                    jQuery('#metrilo_import_step').text((`Importing ${next}`));
-                    dataOptions.importType = next;
-                    sync_chunk(0, dataOptions.importType, false);
-                }
+                sync_chunk(newChunkId, data.importType);
             }
+
+            if (current == 'orders') {
+                jQuery('.metrilo-sync-done').show();
+                jQuery('#metrilo_import_step').hide();
+                jQuery('#metrilo_import_status').hide();
+            }
+
+            jQuery('#metrilo_import_step').text((`Importing ${next}`));
+            
+            dataOptions.importType = next;
+            sync_chunk(0, dataOptions.importType);
         }
 
         function update_importing_message(message, show_loader) {
@@ -118,8 +122,6 @@
             sync_chunk(0, 'customers');
         <?php endif; ?>
     })();
-    /* Add all js related functionality in separate script tag */
-    /* Wrap all js functions in in anonymous function to eliminate global namespace polution */
 </script>
 <div class="welcome-panel">
     <div class="metrilo-logo-holder">
@@ -135,6 +137,9 @@
         <?php if($this->importing): ?>
             <strong id="metrilo_import_step"></strong>
             <strong id="metrilo_import_status"></strong>
+            <span class="metrilo-sync-done">
+                Done! Please expect up to 30 minutes for your historical data to appear in Metrilo.
+            </span>
         <?php else: ?>
             <a href="<?php echo admin_url('tools.php?page=metrilo-import&import=1') ?>" class="button"><strong>Import</strong></a>
         <?php endif; ?>
