@@ -15,7 +15,7 @@ class Metrilo_Customer_Data
     public function get_customers($chunk_id)
     {
         $customers  = [];
-        $user_ids = get_users( array( 'fields' => array( 'ID' ), 'number' => $this->chunk_items, 'offset' => $chunk_id) );
+        $user_ids = get_users(['fields' => ['ID'], 'number' => $this->chunk_items, 'offset' => $chunk_id]);
         
         foreach ($user_ids as $user_id) {
             $customer_data = get_userdata((int)$user_id->ID);
@@ -30,7 +30,11 @@ class Metrilo_Customer_Data
     public function get_customer_chunks()
     {
         $this->customers_total = (int)$this->db_connection->get_var(
-            "SELECT count(id) FROM {$this->db_connection->users} ORDER BY id ASC"
+            "
+            SELECT count(id)
+            FROM {$this->db_connection->users}
+            ORDER BY id ASC
+            "
         );
         
         return (int)ceil($this->customers_total / $this->chunk_items);

@@ -36,7 +36,10 @@ class Metrilo_Connection {
      */
     public function curlCall($url, $headers = [], $body = '', $method = "POST")
     {
-        $response = wp_remote_post($url, array('headers' => $headers, 'body' => $body, 'type' => $method, 'timeout' => 15, 'blocking' => true));
+        $response = wp_remote_post(
+            $url,
+            ['headers' => $headers, 'body' => $body, 'type' => $method, 'timeout' => 15, 'blocking' => true]
+        );
         
         return array(
             'response' => $response['response'],
