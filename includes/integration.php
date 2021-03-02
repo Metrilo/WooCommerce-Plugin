@@ -14,7 +14,7 @@ class Metrilo_Woo_Analytics_Integration extends WC_Integration {
     private $orders_per_import_chunk = 25;
     private $recent_orders_sync_days = 7;
     private $batch_calls_queue = array();
-    private $possible_events = array('view_product' => 'View Product', 'view_category' => 'View Category', 'view_article' => 'View Article', 'add_to_cart' => 'Add to cart', 'remove_from_cart' => 'Remove from cart', 'view_cart' => 'View Cart', 'checkout_start' => 'Started Checkout', 'identify' => 'Identify calls');
+    private $possible_events = array('view_product' => 'View Product', 'view_category' => 'View Category', 'view_article' => 'View Article', 'add_to_cart' => 'Add to cart', 'remove_from_cart' => 'Remove from cart', 'view_cart' => 'View Cart', 'checkout_start' => 'Started Checkout', 'identify' => 'Identify calls', 'pageview' => 'Page View');
     private $endpoint_domain = 'p.metrilo.com';
     public  $tracking_endpoint_domain = 't.metrilo.com';
 
