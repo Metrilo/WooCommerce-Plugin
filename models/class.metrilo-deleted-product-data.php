@@ -70,7 +70,7 @@ class Metrilo_Deleted_Product_Data
                 if ($child_id) {
                     $deleted_product_options = [
                         'id'       => $child_id,
-                        'sku'      => '',
+                        'sku'      => $item->order_item_name,
                         'name'     => $item->order_item_name,
                         'price'    => $subtotal,
                         'imageUrl' => ''
@@ -81,12 +81,12 @@ class Metrilo_Deleted_Product_Data
             $deleted_products[] = [
                 'categories' => [],
                 'id'         => $parent_id ? $parent_id : $child_id,
-                'sku'        => '',
+                'sku'        => $item->order_item_name,
                 'imageUrl'   => '',
                 'name'       => $item->order_item_name,
                 'price'      => $child_id ? 0 : $subtotal,
                 'url'        => '',
-                'options'    => $deleted_product_options
+                'options'    => $child_id ? [$deleted_product_options] : $deleted_product_options
             ];
         }
         
