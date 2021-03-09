@@ -65,9 +65,7 @@ class Metrilo_Deleted_Product_Data
                     $child_id = $item_meta->meta_value;
                 }
                 
-                if ($qty > 1) {
-                    $subtotal = $subtotal / $qty;
-                }
+                $subtotal = $subtotal / $qty;
                 
                 if ($child_id) {
                     $deleted_product_options = [
