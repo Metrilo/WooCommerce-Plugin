@@ -14,82 +14,68 @@ class Metrilo_Deleted_Product_Data
     {
         $deleted_products        = [];
         $deleted_product_options = [];
-        $parent_id = '';
-        $child_id  = '';
-        $qty       = '';
-        $subtotal  = '';
         
         $order_items_table = $this->db_connection->prefix . 'woocommerce_order_items';
-        $order_items = $this->db_connection->get_results(
+        $deleted_items = $this->db_connection->get_results(
                 "
-                SELECT order_items.order_item_id, order_items.order_item_name
+                SELECT
+                  order_items.order_item_name,
+                  item_meta1.meta_value AS product_id,
+                  item_meta2.meta_value AS variation_id,
+                  item_meta3.meta_value AS qty,
+                  item_meta4.meta_value AS subtotal
                 FROM {$order_items_table} AS order_items
-                JOIN {$this->db_connection->order_itemmeta} AS item_meta
-                ON order_items.order_item_id = item_meta.order_item_id
-                AND item_meta.meta_key IN ('_product_id', '_variation_id')
-                WHERE item_meta.meta_value
-                NOT IN (
-                  SELECT id FROM {$this->db_connection->posts} AS posts
-                  WHERE posts.post_type IN ('product', 'product_variation')
-                )
-                AND item_meta.meta_value != 0
-                GROUP BY item_meta.meta_value
+                JOIN {$this->db_connection->order_itemmeta} AS item_meta1
+                  ON order_items.order_item_id = item_meta1.order_item_id
+                  AND item_meta1.meta_key = '_product_id'
+                JOIN {$this->db_connection->order_itemmeta} AS item_meta2
+                  ON order_items.order_item_id = item_meta2.order_item_id
+                  AND item_meta2.meta_key = '_variation_id'
+                JOIN {$this->db_connection->order_itemmeta} AS item_meta3
+                  ON order_items.order_item_id = item_meta3.order_item_id
+                  AND item_meta3.meta_key = '_qty'
+                JOIN {$this->db_connection->order_itemmeta} AS item_meta4
+                  ON order_items.order_item_id = item_meta4.order_item_id
+                  AND item_meta4.meta_key = '_line_subtotal'
+                WHERE
+                  item_meta1.meta_value NOT IN (SELECT id FROM wp_posts WHERE wp_posts.post_type = 'product')
+                OR
+                  (
+                      item_meta2.meta_value NOT IN (SELECT id FROM wp_posts WHERE wp_posts.post_type = 'product_variation')
+                    AND
+                      item_meta2.meta_value != 0
+                  )
+                GROUP BY item_meta1.meta_value, item_meta2.meta_value
                 "
             );
         
-        foreach ($order_items as $item) {
+        foreach ($deleted_items as $item) {
+            $configurable_product = ($item->variation_id !== '0');
+            $subtotal = $item->subtotal / $item->qty;
             
-            $deleted_item_meta = $this->db_connection->get_results(
-                "
-                SELECT *
-                FROM {$this->db_connection->order_itemmeta}
-                WHERE order_item_id = {$item->order_item_id}
-                AND meta_key IN ('_product_id', '_variation_id', '_qty', '_line_subtotal')
-                "
-            );
-            
-            foreach ($deleted_item_meta as $item_meta) {
-                if ($item_meta->meta_key === '_product_id') {
-                    $parent_id = $item_meta->meta_value;
-                }
-                
-                if ($item_meta->meta_key === '_qty') {
-                    $qty = $item_meta->meta_value;
-                }
-                
-                if ($item_meta->meta_key === '_line_subtotal') {
-                    $subtotal = $item_meta->meta_value;
-                }
-                
-                if ($item_meta->meta_key === '_variation_id' && $item_meta->meta_value !== '0') {
-                    $child_id = $item_meta->meta_value;
-                }
-                
-                $subtotal = $subtotal / $qty;
-                
-                if ($child_id) {
-                    $deleted_product_options = [
-                        'id'       => $child_id,
-                        'sku'      => $item->order_item_name,
-                        'name'     => $item->order_item_name,
-                        'price'    => $subtotal,
-                        'imageUrl' => ''
-                    ];
-                }
+            if ($configurable_product) {
+                $deleted_product_options = [
+                    'id'       => $item->variation_id,
+                    'sku'      => '',
+                    'name'     => $item->order_item_name,
+                    'price'    => $subtotal,
+                    'imageUrl' => ''
+                ];
             }
-            
+    
             $deleted_products[] = [
                 'categories' => [],
-                'id'         => $parent_id ? $parent_id : $child_id,
-                'sku'        => $item->order_item_name,
+                'id'         => $item->product_id,
+                'sku'        => '',
                 'imageUrl'   => '',
                 'name'       => $item->order_item_name,
-                'price'      => $child_id ? 0 : $subtotal,
+                'price'      => $configurable_product ? 0 : $subtotal,
                 'url'        => '',
-                'options'    => $child_id ? [$deleted_product_options] : $deleted_product_options
+                'options'    => $configurable_product ? [$deleted_product_options] : $deleted_product_options
             ];
+            
         }
-        
+    
         return $deleted_products;
     }
 }
