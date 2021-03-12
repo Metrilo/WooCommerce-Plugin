@@ -58,8 +58,7 @@ class Metrilo_Deleted_Product_Data
                     'id'       => $item->variation_id,
                     'sku'      => '',
                     'name'     => $item->order_item_name,
-                    'price'    => $subtotal,
-                    'imageUrl' => ''
+                    'price'    => $subtotal
                 ];
             }
     
@@ -67,10 +66,8 @@ class Metrilo_Deleted_Product_Data
                 'categories' => [],
                 'id'         => $item->product_id,
                 'sku'        => '',
-                'imageUrl'   => '',
                 'name'       => $item->order_item_name,
                 'price'      => $configurable_product ? 0 : $subtotal,
-                'url'        => '',
                 'options'    => $configurable_product ? [$deleted_product_options] : $deleted_product_options
             ];
             
