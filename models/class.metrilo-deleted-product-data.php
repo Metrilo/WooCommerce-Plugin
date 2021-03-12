@@ -56,16 +56,13 @@ class Metrilo_Deleted_Product_Data
             if ($configurable_product) {
                 $deleted_product_options = [
                     'id'       => $item->variation_id,
-                    'sku'      => '',
                     'name'     => $item->order_item_name,
                     'price'    => $subtotal
                 ];
             }
     
             $deleted_products[] = [
-                'categories' => [],
                 'id'         => $item->product_id,
-                'sku'        => '',
                 'name'       => $item->order_item_name,
                 'price'      => $configurable_product ? 0 : $subtotal,
                 'options'    => $configurable_product ? [$deleted_product_options] : $deleted_product_options
