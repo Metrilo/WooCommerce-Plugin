@@ -113,6 +113,8 @@ if ( ! class_exists( 'Metrilo_Integration' ) ) {
             
             $this->category_data = include_once(METRILO_ANALYTICS_PLUGIN_PATH . 'models/class.metrilo-category-data.php');
             $this->category_serializer = include_once(METRILO_ANALYTICS_PLUGIN_PATH . 'helpers/class.metrilo-category-serializer.php');
+    
+            $this->deleted_product_data = include_once(METRILO_ANALYTICS_PLUGIN_PATH . 'models/class.metrilo-deleted-product-data.php');
             
             $this->product_data = include_once(METRILO_ANALYTICS_PLUGIN_PATH . 'models/class.metrilo-product-data.php');
             $this->product_serializer = include_once(METRILO_ANALYTICS_PLUGIN_PATH . 'helpers/class.metrilo-product-serializer.php');
@@ -436,6 +438,13 @@ if ( ! class_exists( 'Metrilo_Integration' ) ) {
                     case 'categories':
                         $serialized_categories = $this->serialize_import_records($this->category_data->get_categories($chunk_id), $this->category_serializer);
                         $result                = $client->categoryBatch($serialized_categories);
+                        break;
+                    case 'deletedProducts':
+                        $serialized_deleted_products = $this->deleted_product_data->get_deleted_products();
+                        $deleted_product_chunks      = array_chunk($serialized_deleted_products, $this->import_chunk_size);
+                        foreach ($deleted_product_chunks as $chunk) {
+                            $client->productBatch($chunk);
+                        }
                         break;
                     case 'products':
                         $serialized_products = $this->serialize_import_records($this->product_data->get_products($chunk_id), $this->product_serializer);
