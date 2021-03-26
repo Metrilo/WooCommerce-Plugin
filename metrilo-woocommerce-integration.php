@@ -16,14 +16,10 @@ if ( ! defined( 'ABSPATH' ) ) {
 if ( ! class_exists( 'Metrilo_Analytics' ) ) :
     
     class Metrilo_Analytics {
-        private $integration_version = '2.0.0';
         
         public function __construct() {
-            // ensure correct plugin path
-            $this->define_globals();
             
             add_action('plugins_loaded', array($this, 'init'));
-            
             
             add_filter('query_vars', array($this, 'add_clear_query_var'), 10, 1);
             add_filter('query_vars', array($this, 'add_endpoint_query_vars'), 10, 1);
@@ -59,12 +55,6 @@ if ( ! class_exists( 'Metrilo_Analytics' ) ) :
         public function add_integration($integrations){
             $integrations[] = 'Metrilo_Integration';
             return $integrations;
-        }
-        
-        public function define_globals() {
-            define('METRILO_ANALYTICS_PLUGIN_PATH', plugin_dir_path(__FILE__));
-            define('METRILO_ANALYTICS_BASE_URL', plugin_dir_url(__FILE__));
-            define('METRILO_ANALYTICS_PLUGIN_VERSION', $this->integration_version);
         }
     }
     
