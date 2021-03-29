@@ -7,6 +7,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 if ( ! class_exists( 'Metrilo_Integration' ) ) {
     class Metrilo_Integration extends WC_Integration
     {
+        private $integration_version = '2.0.0';
         private $woo = false;
         private $events_queue = [];
         private $has_events_in_cookie = false;
@@ -22,7 +23,7 @@ if ( ! class_exists( 'Metrilo_Integration' ) ) {
             'checkout_start' => 'Started Checkout',
             'identify' => 'Identify calls'
         );
-        private $plugin_log_path = METRILO_ANALYTICS_PLUGIN_PATH . 'Metrilo_Analytics.log';
+        private $plugin_log_name = 'Metrilo_Analytics.log';
         
         public $import_chunk_size        = 50;
         public $tracking_endpoint_domain = 'trk.mtrl.me';
@@ -53,11 +54,13 @@ if ( ! class_exists( 'Metrilo_Integration' ) ) {
             global $woocommerce, $metrilo_woo_analytics_integration;
             
             $this->woo = function_exists('WC') ? WC() : $woocommerce;
+    
+            // ensure correct plugin path
+            $this->define_globals();
             
             $this->id = 'metrilo-analytics';
             $this->method_title = __('Metrilo', 'metrilo-analytics');
             $this->method_description = __('Metrilo offers powerful yet simple CRM & Analytics for WooCommerce and WooCommerce Subscription Stores. Enter your API key to activate analytics tracking.', 'metrilo-analytics');
-            
             
             // Load the settings.
             $this->init_form_fields();
@@ -102,6 +105,11 @@ if ( ! class_exists( 'Metrilo_Integration' ) ) {
             // process cookie events
             $this->process_cookie_events();
         }
+    
+        public function define_globals() {
+            define('METRILO_ANALYTICS_PLUGIN_PATH', plugin_dir_path(__DIR__));
+            define('METRILO_ANALYTICS_PLUGIN_VERSION', $this->integration_version);
+        }
         
         public function load_helpers_and_data_models()
         {
@@ -113,7 +121,7 @@ if ( ! class_exists( 'Metrilo_Integration' ) ) {
             
             $this->category_data = include_once(METRILO_ANALYTICS_PLUGIN_PATH . 'models/class.metrilo-category-data.php');
             $this->category_serializer = include_once(METRILO_ANALYTICS_PLUGIN_PATH . 'helpers/class.metrilo-category-serializer.php');
-    
+            
             $this->deleted_product_data = include_once(METRILO_ANALYTICS_PLUGIN_PATH . 'models/class.metrilo-deleted-product-data.php');
             
             $this->product_data = include_once(METRILO_ANALYTICS_PLUGIN_PATH . 'models/class.metrilo-product-data.php');
@@ -133,7 +141,7 @@ if ( ! class_exists( 'Metrilo_Integration' ) ) {
                 add_action('admin_notices', array($this, 'admin_keys_notice'));
                 return;
             }
-    
+            
             if(empty($_POST['save'])) {
                 return;
             }
@@ -275,7 +283,11 @@ if ( ! class_exists( 'Metrilo_Integration' ) ) {
                     wp_json_encode($this->identify_call_data, JSON_UNESCAPED_UNICODE)
                 );
             } catch(\Exception $e) {
-                $this->error_logger('new_order_event ', $e->getMessage(), $this->plugin_log_path);
+                $this->error_logger(
+                    'new_order_event ',
+                    $e->getMessage(),
+                    METRILO_ANALYTICS_PLUGIN_PATH . $this->plugin_log_name
+                );
             }
         }
         
@@ -463,7 +475,11 @@ if ( ! class_exists( 'Metrilo_Integration' ) ) {
                 }
                 return json_encode($result);
             } catch (\Exception $e) {
-                $this->error_logger('metrilo_import ', $e->getMessage(), $this->plugin_log_path);
+                $this->error_logger(
+                    'metrilo_import ',
+                    $e->getMessage(),
+                    METRILO_ANALYTICS_PLUGIN_PATH . $this->plugin_log_name
+                );
             }
         }
         
