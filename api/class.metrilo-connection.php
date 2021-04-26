@@ -17,14 +17,13 @@ class Metrilo_Connection {
     {
         $parsedUrl = parse_url($url);
         $headers = [
-            'Content-Type: application/json',
-            'Accept: */*',
-            'User-Agent: HttpClient/1.0.0',
-            'Connection: Close',
-            'Host: '.$parsedUrl['host']
+            'Content-Type' => 'application/json',
+            'Accept'       =>  '*/*',
+            'User-Agent'   => 'HttpClient/1.0.0',
+            'Connection'   => 'Close',
+            'Host'         => $parsedUrl['host'],
+            'X-Digest'     => hash_hmac('sha256', json_encode($bodyArray), $secret)
         ];
-    
-        $headers[] = 'X-Digest: ' . hash_hmac('sha256', json_encode($bodyArray), $secret);
         
         $encodedBody = $activity ? $bodyArray : json_encode($bodyArray);
         
