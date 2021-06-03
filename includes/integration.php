@@ -1186,7 +1186,7 @@ class Metrilo_Woo_Analytics_Integration extends WC_Integration {
         $items = $this->get_items_in_cookie();
         if(empty($items)) $items = array();
         array_push($items, $data);
-        $encoded_items = json_encode($items);
+        $encoded_items = json_encode($items, JSON_UNESCAPED_UNICODE);
         $this->session_set($this->get_cookie_name(), $encoded_items);
     }
 
