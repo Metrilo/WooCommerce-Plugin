@@ -88,6 +88,7 @@ if ( ! class_exists( 'Metrilo_Integration' ) ) {
         
         public function on_woocommerce_init()
         {
+            // remove from hook for QA env object instantiation
             $this->load_helpers_and_data_models();
             
             // check if I should clear the events cookie queue
