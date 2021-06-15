@@ -63,6 +63,7 @@ class Metrilo_Deleted_Product_Data
     
             $deleted_products[] = [
                 'id'         => $item->product_id,
+                'categories' => [],
                 'name'       => $item->order_item_name,
                 'price'      => $configurable_product ? 0 : $subtotal,
                 'options'    => $configurable_product ? [$deleted_product_options] : $deleted_product_options
