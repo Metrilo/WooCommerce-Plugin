@@ -25,8 +25,8 @@ class Metrilo_Order_Data
                 limit %d
                 offset %d
                 ",
-                $chunk_id,
-                $this->chunk_items
+                $this->chunk_items,
+                $chunk_id
             )
         );
         
