@@ -11,7 +11,7 @@ class Metrilo_Connection {
      * @param Array $bodyArray
      * @param Boolean $activity
      * @param String $secret
-     * @return void
+     * @return array
      */
     public function post($url, $bodyArray, $activity = false, $secret)
     {
