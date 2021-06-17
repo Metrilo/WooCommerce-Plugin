@@ -27,7 +27,7 @@ if ( ! class_exists( 'Metrilo_Integration' ) ) {
         
         public $import_chunk_size        = 50;
         public $tracking_endpoint_domain = 'trk.mtrl.me';
-        public $activity_enpoint_domain  = 'p.metrilo.com';
+        public $activity_endpoint_domain  = 'p.metrilo.com';
         
         private $activity_helper;
         private $api_client;
@@ -88,6 +88,7 @@ if ( ! class_exists( 'Metrilo_Integration' ) ) {
         
         public function on_woocommerce_init()
         {
+            // remove from hook for QA env object instantiation
             $this->load_helpers_and_data_models();
             
             // check if I should clear the events cookie queue
@@ -153,7 +154,7 @@ if ( ! class_exists( 'Metrilo_Integration' ) ) {
                 return;
             }
             
-            $response = $this->activity_helper->create_activity('integrated', $this->activity_enpoint_domain);
+            $response = $this->activity_helper->create_activity('integrated', $this->activity_endpoint_domain);
             
             if ($response) {
                 add_action('admin_notices', array($this, 'admin_import_invite'));
@@ -438,11 +439,11 @@ if ( ! class_exists( 'Metrilo_Integration' ) ) {
                 $chunk_id = (int)$_REQUEST['chunkId'];
                 $import_type = (string)$_REQUEST['importType'];
                 $client = $this->api_client->get_client($this->tracking_endpoint_domain);
-                
+    
                 switch ($import_type) {
                     case 'customers':
                         if ($chunk_id == 0) {
-                            $this->activity_helper->create_activity('import_start', $this->activity_enpoint_domain);
+                            $this->activity_helper->create_activity('import_start', $this->activity_endpoint_domain);
                         }
                         $serialized_customers = $this->serialize_import_records($this->customer_data->get_customers($chunk_id), $this->customer_serializer);
                         $result               = $client->customerBatch($serialized_customers);
@@ -466,7 +467,7 @@ if ( ! class_exists( 'Metrilo_Integration' ) ) {
                         $serialized_orders = $this->serialize_import_records($this->order_data->get_orders($chunk_id), $this->order_serializer);
                         $result            = $client->orderBatch($serialized_orders);
                         if ($chunk_id == (int)$_REQUEST['ordersChunks'] - 1) {
-                            $this->activity_helper->create_activity('import_end', $this->activity_enpoint_domain);
+                            $this->activity_helper->create_activity('import_end', $this->activity_endpoint_domain);
                         }
                         break;
                     default:

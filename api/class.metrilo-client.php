@@ -8,19 +8,27 @@ require_once(METRILO_ANALYTICS_PLUGIN_PATH . 'api/class.metrilo-validator.php');
 
 class Metrilo_Client {
     
+    private $customer_path = '/v2/customer';
+    private $category_path = '/v2/category';
+    private $product_path  = '/v2/product';
+    private $order_path    = '/v2/order';
+    
     private $backend_params = array();
+    private $secret;
     private $api_end_point;
     private $log_path;
     private $validator;
     
     public function __construct(
         $token,
+        $secret,
         $platform,
         $plugin_version,
         $api_end_point,
         $log_path
     ) {
         $this->backend_params['token']         = $token;
+        $this->secret                          = $secret;
         $this->backend_params['platform']      = $platform;
         $this->backend_params['pluginVersion'] = $plugin_version;
         $this->api_end_point                   = $api_end_point;
@@ -33,14 +41,14 @@ class Metrilo_Client {
         $this->backend_params['time'] = round(microtime(true) * 1000);
         $body                         = array_merge($body, $this->backend_params);
         
-        return $connection->post($this->api_end_point.$path, $body, false);
+        return $connection->post($this->api_end_point.$path, $body, false, $this->secret);
     }
     
     public function customer($customer) {
         $validCustomer = $this->validator->validateCustomer($customer);
         
         if ($validCustomer) {
-            return $this->backendCall('/customer', ['params' => $customer]);
+            return $this->backendCall($this->customer_path, ['params' => $customer]);
         }
     }
     
@@ -48,7 +56,7 @@ class Metrilo_Client {
         $validCustomers = $this->validator->validateCustomers($customers);
         
         if (!empty($validCustomers)) {
-            return $this->backendCall('/customer/batch', ['batch' => $validCustomers]);
+            return $this->backendCall($this->customer_path . '/batch', ['batch' => $validCustomers]);
         }
     }
     
@@ -56,7 +64,7 @@ class Metrilo_Client {
         $validCategory = $this->validator->validateCategory($category);
         
         if ($validCategory) {
-            return $this->backendCall('/category', ['params' => $category]);
+            return $this->backendCall($this->category_path, ['params' => $category]);
         }
     }
     
@@ -64,7 +72,7 @@ class Metrilo_Client {
         $validCategories = $this->validator->validateCategories($categories);
         
         if (!empty($validCategories)) {
-            return $this->backendCall('/category/batch', ['batch' => $validCategories]);
+            return $this->backendCall($this->category_path . '/batch', ['batch' => $validCategories]);
         }
     }
     
@@ -72,7 +80,7 @@ class Metrilo_Client {
         $validProduct = $this->validator->validateProduct($product);
         
         if ($validProduct) {
-            return $this->backendCall('/product', ['params' => $product]);
+            return $this->backendCall($this->product_path, ['params' => $product]);
         }
     }
     
@@ -80,7 +88,7 @@ class Metrilo_Client {
         $validProducts = $this->validator->validateProducts($products);
         
         if (!empty($validProducts)) {
-            return $this->backendCall('/product/batch', ['batch' => $validProducts]);
+            return $this->backendCall($this->product_path . '/batch', ['batch' => $validProducts]);
         }
     }
     
@@ -88,7 +96,7 @@ class Metrilo_Client {
         $validOrder = $this->validator->validateOrder($order);
         
         if ($validOrder) {
-            return $this->backendCall('/order', ['params' => $order]);
+            return $this->backendCall($this->order_path, ['params' => $order]);
         }
     }
     
@@ -96,13 +104,13 @@ class Metrilo_Client {
         $validOrders = $this->validator->validateOrders($orders);
         
         if (!empty($validOrders)) {
-            return $this->backendCall('/order/batch', ['batch' => $validOrders]);
+            return $this->backendCall($this->order_path . '/batch', ['batch' => $validOrders]);
         }
     }
     
     public function createActivity($url, $data) {
         $connection = new Metrilo_Connection();
-        $result     = $connection->post($url, $data, true);
+        $result     = $connection->post($url, $data, true, $this->secret);
         return $result['code'] == 200;
     }
 }

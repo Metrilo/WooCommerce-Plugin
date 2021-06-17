@@ -11,7 +11,7 @@ class Metrilo_Validator {
     public function __construct(
         $logPath
     ) {
-        $this->logPath = $logPath . '/MetriloApiValidationErrors.log';
+        $this->logPath = $logPath . 'MetriloApiValidationErrors.log';
     }
     
     public function check($var){
