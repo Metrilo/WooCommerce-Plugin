@@ -14,14 +14,15 @@ if ( ! class_exists( 'Metrilo_Integration' ) ) {
         private $identify_call_data = false;
         private $user_tags = [];
         private $possible_events = array(
-            'view_product' => 'View Product',
-            'view_category' => 'View Category',
-            'view_article' => 'View Article',
-            'add_to_cart' => 'Add to cart',
-            'remove_from_cart' => 'Remove from cart',
-            'view_cart' => 'View Cart',
+            'view_product' => 'Viewed A Product',
+            'view_category' => 'Viewed A Category',
+            'view_article' => 'Viewed An Article',
+            'add_to_cart' => 'Added To The Cart',
+            'remove_from_cart' => 'Removed From The Cart',
+            'view_cart' => 'Viewed The Cart',
             'checkout_start' => 'Started Checkout',
-            'identify' => 'Identify calls'
+            'identify' => 'Identified Oneself',
+            'pageview' => 'Viewed A Page'
         );
         private $plugin_log_name = 'Metrilo_Analytics.log';
         
