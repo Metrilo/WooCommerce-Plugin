@@ -16,16 +16,16 @@ class Metrilo_Connection {
     public function post($url, $bodyArray, $secret)
     {
         $parsedUrl = parse_url($url);
+        $encodedBody = json_encode($bodyArray);
+        
         $headers = [
             'Content-Type' => 'application/json',
             'Accept'       =>  '*/*',
             'User-Agent'   => 'HttpClient/1.0.0',
             'Connection'   => 'Close',
             'Host'         => $parsedUrl['host'],
-            'X-Digest'     => hash_hmac('sha256', json_encode($bodyArray), $secret)
+            'X-Digest'     => hash_hmac('sha256', $encodedBody, $secret)
         ];
-
-        $encodedBody = $bodyArray ? json_encode($bodyArray) : '';
         
         return $this->curlCall($url, $headers, $encodedBody);
     }
