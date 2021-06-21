@@ -110,7 +110,7 @@ class Metrilo_Client {
     
     public function createActivity($url, $data) {
         $connection = new Metrilo_Connection();
-        $result     = $connection->post($url, $data, true, $this->secret);
+        $result     = $connection->post($url, $data, $this->secret);
         return $result['code'] == 200;
     }
 }

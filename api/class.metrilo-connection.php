@@ -13,7 +13,7 @@ class Metrilo_Connection {
      * @param String $secret
      * @return array
      */
-    public function post($url, $bodyArray, $activity = false, $secret)
+    public function post($url, $bodyArray, $secret)
     {
         $parsedUrl = parse_url($url);
         $headers = [
@@ -24,8 +24,8 @@ class Metrilo_Connection {
             'Host'         => $parsedUrl['host'],
             'X-Digest'     => hash_hmac('sha256', json_encode($bodyArray), $secret)
         ];
-        
-        $encodedBody = $activity ? $bodyArray : json_encode($bodyArray);
+
+        $encodedBody = $bodyArray ? json_encode($bodyArray) : '';
         
         return $this->curlCall($url, $headers, $encodedBody);
     }
