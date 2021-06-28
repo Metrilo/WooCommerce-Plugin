@@ -15,9 +15,8 @@ class Metrilo_Activity {
         $client         = $api_client->get_client($end_point);
         
         $data = array(
-            'type'          => $type,
-            'project_token' => $token,
-            'signature'     => md5($token . $type . $secret)
+            'type'   => $type,
+            'secret' => $secret
         );
         
         $url = $end_point . '/tracking/' . $token . '/activity';
