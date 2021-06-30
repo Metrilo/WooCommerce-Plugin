@@ -2,8 +2,8 @@
 Contributors: MurryIvanoff
 Tags: woocommerce, analytics, reporting, tracking, woo, ecommerce, funnels, metrics, kissmetrics, mixpanel, crm, history, products, items, rjmetrics, analytics dashboard, google analytics, products, retention, coupons, customers, big data, customer relationship management, subscriptions, woocommerce subscriptions, churn, customer analytics, insights, ltv, email marketing, email, triggered emails, cohorts, sales analytics, customer intelligence, email marketing, automation, cart abandonment, cart recovery
 Requires at least: 2.9.2
-Tested up to: 5.4.2
-Stable Tag: 1.7.17
+Tested up to: 5.5.1
+Stable Tag: 2.0.0
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -11,41 +11,42 @@ Ecommerce Analytics and behaviour-driven customer engagement tools for ecommerce
 
 == Description ==
 
-Metrilo is the growth marketing platform for modern consumer brands.
-Metrilo’s analytics measure your business performance and give you insights to make strategic decisions. The engagement tools build on top of the vast data made accessible and enable you to bond with your customers long-term.
+[Metrilo](https://www.metrilo.com/?ref=wpplugin) is a growth platform for the modern product brands with a long-term strategy and looking for profitability. Metrilo offers tools for marketing optimization, customer management, engagement and retention as well as email and feedback gathering automation. It facilitates growth through usable data and unique focus on driving repeat sales. Tailored to be used by brand founders, agencies and small marketing teams.
 
-Metrilo helps your brand grow by making your data actionable and increasing customer retention.
+The extension connects easily to your Woocommerce store and processes sales and marketing data into ready-to-use reports and rich customer insights, including historical data - Metrilo will make past orders and old customers accessible for reactivation, too! Then, you can monitor how your store is doing via the dashboard with all key metrics in real time. The Marketing performance, Revenue breakdown and Product performance reports show opportunities for optimization. The Customer Database makes your first-party customer data usable for segmentation and engagement via emails or retargeting. The Customer Retention feature helps you understand the customer lifecycle and loyalty to drive more repeat sales. And finally, the emails - manual and automated, utilize all data to reach customers at the right time with the right message. Metrilo opens up opportunities to grow your revenue without spending more on marketing.
 
-= Optimize your WooCommerce store marketing =
-Metrilo connects marketing and sales to show you how to maximize ROI
+= Account & Pricing =
+An account is required to use the Metrilo extension. For a free trial, please visit our [sign up page](https://www.metrilo.com/signup?ref=wpplugin). Additional fees apply. Pricing is available on our [pricing page](https://www.metrilo.com/pricing?ref=wpplugin).
 
-* Key sales metrics and marketing performance at a glance
-* Comparison of marketing channels
-* Real-time revenue reporting and many breakdowns
-* Pre-set sales funnel tracking
-* Product performance data to help you develop your brand
+= Features: =
+* Sales performance dashboard - all essential KPIs up-to-date in real time
+* Marketing performance reporting and Revenue breakdown - see what brings you sales and is worth investing in
+* Product performance reports - for better product management
+* Customer Database - complete profiles of all your customers and numerous filtering options for segmentation
+* Customer Retention - monitor the customer lifecycle and loyalty to be able to drive more repeat sales
+* Email Automation - tailored email engagement on autopilot based on all this data
 
-= Grow your WooCommerce store thanks to existing customers =
-Metrilo unlocks opportunities for growth in your customer data
+= Grow In Sales With Your Existing Customer Base =
+By understanding your customers better, you will uncover untapped opportunities for engagement of those who have already purchased from you.
 
-* Comprehensive customer profiles so you truly understand your buyers
-* Manage your entire customer database with tags and segments
-* Improve the buying experience with customer journey tracking
-* Find out what stimulates repeat orders in your business
+* Monitor their customer journey
+* Create specific segments to engage post-purchase based on behavior
+* See what incentives drive loyalty and get to know your most loyal fans
 
-= WOOCOMMERCE EMAIL MARKETING =
-Metrilo makes it easy to engage your customer base for higher retention
-* Integrated data and email for building relationships with customers
-* Customer lifecycle monitoring and loyalty analysis
-* Segmentations and emails for personalized communication
-* Tailored engagement on autopilot
-* Automated feedback gathering
-* Recover lost sales
+= Grow With Long Lasting Customer Relationships =
+Metrilo's powerful personalized emails engage better, build relationships and drive repeat sales.
+
+* Send effective data-driven emails
+* Segment your customer base meaningfully and tailor the experience
+* Automate engagement - content drips, replenishment, abandoned carts, etc.
+* Gather feedback automatically - and measure customer satisfaction
+
+Metrilo helps you understand, engage with, and grow your Woocommerce store. The platform unlocks growth through customer retention, which brings marketing costs down and improves ROI. Metrilo is built for brands looking to scale and to build long-lasting customer relationships. We do just that. Getting started only takes a minute and your data is ready to help you grow.
 
 The official Metrilo plugin connects your WooCommerce store with the Metrilo platform in less than 5 minutes. It is a self-standing platform that tracks data in real time and reports are accurate to the minute without slowing down your website.
 
-You can start growing your brand today - your insights will be available immediately as soon as you start your trial at [metrilo.com](https://www.metrilo.com/signup?ref=wpplugin&plan=premium&skip=true).
-[Sign up now for free](https://www.metrilo.com/signup?ref=wpplugin&plan=premium&skip=true) and get all-inclusive 14-day trial.
+You can start growing your brand today - your insights will be available immediately as soon as you start your trial at [metrilo.com](https://www.metrilo.com/signup?ref=wpplugin).
+[Sign up now for free](https://www.metrilo.com/signup?ref=wpplugin) and get all-inclusive 14-day trial.
 
 We provide Ask-Us-Anything support. You are more than welcome to get in touch with us anytime using the live chat on our website.
 
@@ -56,7 +57,7 @@ Once you install the plugin, follow these steps:
 
 1. Activate the plugin.
 2. Go to Woocommerce's Settings page and click the Integrations tab.
-3. Enter your unique Metrilo API token and click "Save settings". If you don't have API token, [sign up for free now](https://www.metrilo.com/signup?ref=wpplugin&plan=premium&skip=true) and get one!
+3. Enter your unique Metrilo API token and click "Save settings". If you don't have API token, [sign up for free now](https://www.metrilo.com/signup?ref=wpplugin) and get one!
 4. That's it. Enjoy a cup of coffee :-)
 
 == Frequently Asked Questions ==
@@ -93,202 +94,20 @@ Absolutely! We offer a 14-day free trial on every plan. No obligation. No credit
 
 == Changelog ==
 
-= 1.7.17 =
-* Fixed: Deprecated get_product method and woocommerce_before_cart_item_quantity_zero action hook usage in woocommerce versions higher than 3.7.
-
-= 1.7.16 =
-* Fixed: Deprecated coupon code method usage in woocommerce versions higher than 3.7.
-
-= 1.7.15 =
-* Fixed: Decode html entities before syncing data with Metrilo.
-
-= 1.7.14 =
-* Fixed: Last name parameter taking values for First name when syncing data with Metrilo.
-
-= 1.7.13 =
-* New: Additional functionality to handle phone orders.
-
-= 1.7.12 =
-* Fixed: extracting image url instead of GUID when syncing with Metrilo.
-
-= 1.7.11 =
-* Fixed: applied_coupon event not syncing with Metrilo.
-
-= 1.7.10 =
-* Excluding orders without email from sync with Metrilo.
-
-= 1.7.9 =
-* Fixed: Send remove from card event to Metrilo on every interaction with the user's cart.
-* Fixed: Subtract refunds from order amount, when syncing with Metrilo.
-
-= 1.7.8 =
-* Fixed: Exception when using WooCommerce before version 3.
-
-= 1.7.7 =
-* Fixed: Sending order events with deleted products.
-
-= 1.7.6 =
-* Send SKU information for parent products and variations.
-* Check integration credentials on save.
-
-= 1.7.5 =
-* Using wp_get_product instead of WC_Product_Variation (thanks to Tung Quach for the suggestion)
-
-= 1.7.4 =
-* Compatible with WP 4.9.1
-
-= 1.7.3 =
-* Fixed: WooCommerce subscriptions filter glitch
-
-= 1.7.1 =
-* Fixed: Fix for version 1.7.0 that would cause issues on versions of PHP older than 5.5
-
-= 1.7.0 =
-* Optimized: Now using direct methods in all cases to avoid generating Notices for WooCommerce 3.x
-
-= 1.6.3 =
-* Optimized: jQuery-related operations moved to wp_footer to avoid issues on WooCommerce setups where jQuery is not loaded at the beginning
-
-= 1.6.2 =
-* New: You can now prefix all your order IDs (for multi-shop setups)
-
-= 1.6.1 =
-* Improved: Not using methods marked as deprecated in WooCommerce 3.x
-* New: Being able to send a specific tag with every customer (for multi-shop setups)
-
-= 1.6.0 =
-* Fixed: Now works with WooCommerce 3.0
-
-= 1.5.1 =
-* Improved: Order sessions tracking is now more accurate
-
-= 1.5.0 =
-* New: Added possibility for Metrilo to sync orders with your WooCommerce store that were not synced due to technical reasons
-
-= 1.4.6 =
-* Option: You can now choose if your backend WooCommerce calls should be sent to Metrilo through HTTP or HTTPS
-
-= 1.4.5 =
-* Bug fix: Identify calls can now also be ignored when sending to Metrilo
-* Improved: Send status change debugging data to Metrilo to help fixing status issues
-
-= 1.4.4 =
-* Improved: Order status change tracking improvement
-
-= 1.4.3 =
-* New: You can now choose which tracking events to not be sent to Metrilo
-
-= 1.4.2 =
-* New: You can now send your user's roles as tags to Metrilo
-
-= 1.4.1 =
-* Faster: Tracking add_to_cart events now uses it's own endpoint to clear it's cookie and doesn't use admin-ajax.php anymore.
-
-= 1.4.0 =
-* New: You can now choose a product attribute to be sent as brand to Metrilo (beta)
-
-= 1.3.9 =
-* Works with WordPress 4.6.1
-
-= 1.3.8 =
-* Improved: Integrate with Aelia Currency Switcher plugin
-
-= 1.3.7 =
-* Updated: Now officially supporting WordPress 4.5.3
-
-= 1.3.6 =
-* Optimized: Also send server time when sending API calls to improve reliability of Metrilo order status tracking
-
-= 1.3.5 =
-* Optimized: Batch API calls are moved to a better endpoint
-
-= 1.3.4 =
-* Optimized: Importing historical orders
-
-= 1.3.3 =
-* Fixed: Fixed an issue with PHP Magic quotes
-
-= 1.3.2 =
-* Fixed: Fixed an issue with PHP versions older than 5.3
-
-= 1.3.1 =
-* Improved: Send orders to Metrilo regardless if the visitor goes to the Thank You page
-
-= 1.3.0 =
-* New: Metrilo is now also syncing customer contact data, including phone number
-
-= 1.2.3 =
-* Optimized: Tracking accuracy improved for slow order checkout flows
-
-= 1.2.2 =
-* Optimized: Optimized orders sync - now using batch API calls to send orders to Metrilo
-
-= 1.2.1 =
-* Optimized: When sending order events from session queue, make sure the order status us up-to-date (thanks, Ela!)
-
-= 1.2.0 =
-* Optimized: Syncing orders without billing data by using the WP user data
-
-= 1.1.9 =
-* Optimized: Syncing orders to Metrilo
-
-= 1.1.8 =
-* Improved: Syncing orders to Metrilo now takes less time
-
-= 1.1.7 =
-* Fixed: Now supporting WooCommerce 2.1 order statuses
-
-= 1.1.6 =
-* Improved: You can now select WP user roles from which Metrilo will ignore sending tracking data
-
-= 1.1.2 =
-* Improved: Send customer order location to Metrilo when syncing orders
-
-= 1.1.0 =
-* Fixed: issue with non-GMT WooCommerce installations. Thank you for reporting it, Kevin and Gregg!
-
-= 1.0.3 =
-* This plugin now keeps your order statuses in sync between WooCommerce and Metrilo
-
-= 1.0.2 =
-* Onboarding changes
-* Importing WooCommerce orders and customers to Metrilo is now out of beta.
-
-= 0.99 =
-* New: You can now import your historical orders and customers to Metrilo (still in beta)
-* Optimized: Now optimized for importing thousands of orders
-
-= 0.98 =
-* New: You can now import your historical orders and customers to Metrilo. Please note that this feature is still in beta.
-* A few small bug fixes.
-
-= 0.96 =
-* New: Metrilo now tracks WooCommerce Subscriptions orders automatically to help you measure your retention and churn
-* Many small Bug fixes. Thank you for reporting, Paolo and and Luciano!
-
-= 0.92 =
-* Bug fix with WooCommerce session integration
-
-= 0.91 =
-* Now tracking coupon usage to analyze retention based on coupons applied to orders
-
-= 0.89 =
-* Improved reliability of orders tracking
-
-= 0.86 =
-* Bug fixes
-
-= 0.81 =
-* Backwards compitability with 2.0x versions. Stability improvements.
-
-= 0.71 =
-* Metrilo now works as WooCommerce integration. Improved session management using WooCommerce's Session Handler.
-
-= 0.69 =
-* Bug fixes and optimizations
-
-= 0.6 =
-* Applying coupons to orders is now tracked
-
-= 0.5 =
-* First stable version.
+= 2.0.0 =
+* New: Metrilo API integration for Woocommerce with stability and reliability improvements. Including the following new tracking features:
+Customer improvements:
+Customer admin actions tracking (edit existing, create new, mass update).
+Customer registration.
+Tracking shop newsletter subscribers that are not registered customers.
+Track customer user group (tags).
+Category improvement:
+Category admin actions tracking (edit existing, create new, mass update)
+Product improvements:
+Product admin actions tracking (edit existing, create new, mass update)
+Improved item options tracking.
+Special price.
+Order improvements:
+Correct tracking for refunded orders.
+Support Phone orders.
+Import of historical data supports tracking of deleted products.
