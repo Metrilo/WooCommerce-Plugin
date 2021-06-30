@@ -13,7 +13,7 @@ Ecommerce Analytics and behaviour-driven customer engagement tools for ecommerce
 
 [Metrilo](https://www.metrilo.com/?ref=wpplugin) is a growth platform for the modern product brands with a long-term strategy and looking for profitability. Metrilo offers tools for marketing optimization, customer management, engagement and retention as well as email and feedback gathering automation. It facilitates growth through usable data and unique focus on driving repeat sales. Tailored to be used by brand founders, agencies and small marketing teams.
 
-The extension connects easily to your WooCommerce store and processes sales and marketing data into ready-to-use reports and rich customer insights, including historical data - Metrilo will make past orders and old customers accessible for reactivation, too! Then, you can monitor how your store is doing via the dashboard with all key metrics in real time. The Marketing performance, Revenue breakdown and Product performance reports show opportunities for optimization. The Customer Database makes your first-party customer data usable for segmentation and engagement via emails or retargeting. The Customer Retention feature helps you understand the customer lifecycle and loyalty to drive more repeat sales. And finally, the emails - manual and automated, utilize all data to reach customers at the right time with the right message. Metrilo opens up opportunities to grow your revenue without spending more on marketing.
+The extension connects easily to your WooCommerce store and processes sales and marketing data into ready-to-use reports and rich customer insights, including historical data - Metrilo will make past orders and old customers accessible for reactivation, too! Then, you can monitor how your store is doing via the dashboard with all key metrics in real time. The Marketing performance, Revenue and Products reports show opportunities for optimization. The Customer Database makes your first-party customer data usable for segmentation and engagement via emails or retargeting. The Retention feature helps you understand the customer lifecycle and loyalty to drive more repeat sales. And finally, the emails - manual and automated, utilize all data to reach customers at the right time with the right message. Metrilo opens up opportunities to grow your revenue without spending more on marketing.
 
 = Account & Pricing =
 An account is required to use the Metrilo extension. For a free trial, please visit our [sign up page](https://www.metrilo.com/signup?ref=wpplugin). Additional fees apply. Pricing is available on our [pricing page](https://www.metrilo.com/pricing?ref=wpplugin).
@@ -23,8 +23,8 @@ An account is required to use the Metrilo extension. For a free trial, please vi
 * Analytics > Revenue - see what brings you sales and is worth investing in
 * Analytics > Products - for better product management
 * Analytics > Retention - monitor the customer lifecycle and loyalty to be able to drive more repeat sales
+* Email > Automation - tailored email engagement on autopilot based on all this data
 * Customer Database - complete profiles of all your customers and numerous filtering options for segmentation
-* Email Automation - tailored email engagement on autopilot based on all this data
 
 = Grow In Sales With Your Existing Customer Base =
 By understanding your customers better, you will uncover untapped opportunities for engagement of those who have already purchased from you.
