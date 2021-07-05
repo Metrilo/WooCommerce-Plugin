@@ -99,18 +99,21 @@
 
             if (hasMoreChunks) {
                 sync_chunk(newChunkId, data.importType);
+                return;
             }
 
-            if (current == 'orders') {
+            jQuery('#metrilo_import_step').text((`Importing ${next}`));
+
+            data.importType = next;
+            
+            if(data.importType !== null) {
+                sync_chunk(0, data.importType);
+            } else {
                 jQuery('.metrilo-sync-done').show();
                 jQuery('#metrilo_import_step').hide();
                 jQuery('#metrilo_import_status').hide();
             }
-
-            jQuery('#metrilo_import_step').text((`Importing ${next}`));
             
-            dataOptions.importType = next;
-            sync_chunk(0, dataOptions.importType);
         }
 
         function update_importing_message(message, show_loader) {
