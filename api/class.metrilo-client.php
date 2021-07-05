@@ -41,7 +41,7 @@ class Metrilo_Client {
         $this->backend_params['time'] = round(microtime(true) * 1000);
         $body                         = array_merge($body, $this->backend_params);
         
-        return $connection->post($this->api_end_point.$path, $body, false, $this->secret);
+        return $connection->post($this->api_end_point.$path, $body, $this->secret);
     }
     
     public function customer($customer) {
