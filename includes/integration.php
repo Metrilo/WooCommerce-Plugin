@@ -82,9 +82,6 @@ if ( ! class_exists( 'Metrilo_Integration' ) ) {
             
             // initiate woocommerce hooks and activities
             add_action('woocommerce_init', array($this, 'on_woocommerce_init'));
-            
-            // hook to integration settings update
-            add_action('woocommerce_update_options_integration_' . $this->id, array($this, 'process_admin_options'));
         }
         
         public function on_woocommerce_init()
@@ -106,6 +103,9 @@ if ( ! class_exists( 'Metrilo_Integration' ) ) {
             
             // process cookie events
             $this->process_cookie_events();
+    
+            // hook to integration settings update
+            add_action('woocommerce_update_options_integration_' . $this->id, array($this, 'process_admin_options'));
         }
     
         public function define_globals() {
@@ -135,6 +135,9 @@ if ( ! class_exists( 'Metrilo_Integration' ) ) {
         
         public function check_for_keys()
         {
+            $api_token_key = 'woocommerce_metrilo-analytics_api_token';
+            $api_secret_key = 'woocommerce_metrilo-analytics_api_secret';
+            
             if (!is_admin()) {
                 return;
             }
@@ -148,21 +151,21 @@ if ( ! class_exists( 'Metrilo_Integration' ) ) {
                 return;
             }
             
-            $key = trim($_POST['woocommerce_metrilo-analytics_api_token']);
-            $secret = trim($_POST['woocommerce_metrilo-analytics_api_secret']);
+            $token = trim($_POST[$api_token_key]);
+            $secret = trim($_POST[$api_secret_key]);
             
-            if(empty($key) || empty($secret)) {
+            if(empty($token) || empty($secret)) {
                 return;
             }
             
-            $response = $this->activity_helper->create_activity('integrated', $this->activity_endpoint_domain);
+            $response = $this->activity_helper->create_activity('integrated', $this->activity_endpoint_domain, $token, $secret);
             
             if ($response) {
                 add_action('admin_notices', array($this, 'admin_import_invite'));
             } else {
                 WC_Admin_Settings::add_error($this->admin_import_error_message());
-                $_POST['woocommerce_metrilo-woo-analytics_api_key'] = '';
-                $_POST['woocommerce_metrilo-woo-analytics_api_secret'] = '';
+                $_POST[$api_token_key] = '';
+                $_POST[$api_secret_key] = '';
             }
         }
         
