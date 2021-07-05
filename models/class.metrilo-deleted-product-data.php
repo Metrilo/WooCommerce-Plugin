@@ -15,7 +15,11 @@ class Metrilo_Deleted_Product_Data
         $deleted_products        = [];
         $deleted_product_options = [];
         
-        $order_items_table = $this->db_connection->prefix . 'woocommerce_order_items';
+        $db_prefix            = $this->db_connection->prefix;
+        $order_items_table    = $db_prefix . 'woocommerce_order_items';
+        $order_itemmeta_table = $db_prefix . 'woocommerce_order_itemmeta';
+        $posts_table          = $db_prefix . 'posts';
+        
         $deleted_items = $this->db_connection->get_results(
                 "
                 SELECT
@@ -25,23 +29,23 @@ class Metrilo_Deleted_Product_Data
                   item_meta3.meta_value AS qty,
                   item_meta4.meta_value AS subtotal
                 FROM {$order_items_table} AS order_items
-                JOIN {$this->db_connection->order_itemmeta} AS item_meta1
+                JOIN {$order_itemmeta_table} AS item_meta1
                   ON order_items.order_item_id = item_meta1.order_item_id
                   AND item_meta1.meta_key = '_product_id'
-                JOIN {$this->db_connection->order_itemmeta} AS item_meta2
+                JOIN {$order_itemmeta_table} AS item_meta2
                   ON order_items.order_item_id = item_meta2.order_item_id
                   AND item_meta2.meta_key = '_variation_id'
-                JOIN {$this->db_connection->order_itemmeta} AS item_meta3
+                JOIN {$order_itemmeta_table} AS item_meta3
                   ON order_items.order_item_id = item_meta3.order_item_id
                   AND item_meta3.meta_key = '_qty'
-                JOIN {$this->db_connection->order_itemmeta} AS item_meta4
+                JOIN {$order_itemmeta_table} AS item_meta4
                   ON order_items.order_item_id = item_meta4.order_item_id
                   AND item_meta4.meta_key = '_line_subtotal'
                 WHERE
-                  item_meta1.meta_value NOT IN (SELECT id FROM wp_posts WHERE wp_posts.post_type = 'product')
+                  item_meta1.meta_value NOT IN (SELECT id FROM {$posts_table} WHERE {$posts_table}.post_type = 'product')
                 OR
                   (
-                      item_meta2.meta_value NOT IN (SELECT id FROM wp_posts WHERE wp_posts.post_type = 'product_variation')
+                      item_meta2.meta_value NOT IN (SELECT id FROM {$posts_table} WHERE {$posts_table}.post_type = 'product_variation')
                     AND
                       item_meta2.meta_value != 0
                   )
