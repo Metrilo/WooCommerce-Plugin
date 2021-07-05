@@ -7,7 +7,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 if ( ! class_exists( 'Metrilo_Integration' ) ) {
     class Metrilo_Integration extends WC_Integration
     {
-        private $integration_version = '2.0.0';
+        private $integration_version = '2.0.1';
         private $woo = false;
         private $events_queue = [];
         private $has_events_in_cookie = false;

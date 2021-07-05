@@ -2,8 +2,8 @@
 Contributors: MurryIvanoff
 Tags: woocommerce, analytics, reporting, tracking, woo, ecommerce, funnels, metrics, kissmetrics, mixpanel, crm, history, products, items, rjmetrics, analytics dashboard, google analytics, products, retention, coupons, customers, big data, customer relationship management, subscriptions, woocommerce subscriptions, churn, customer analytics, insights, ltv, email marketing, email, triggered emails, cohorts, sales analytics, customer intelligence, email marketing, automation, cart abandonment, cart recovery
 Requires at least: 2.9.2
-Tested up to: 5.5.1
-Stable Tag: 2.0.0
+Tested up to: 5.7.2
+Stable Tag: 2.0.1
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -93,6 +93,9 @@ Absolutely! We offer a 14-day free trial on every plan. No obligation. No credit
 5. Easily build and send personalized responsive email campaigns
 
 == Changelog ==
+
+= 2.0.1 =
++Fixed: Admin import process and plugin configuration update.
 
 = 2.0.0 =
 * New: Metrilo API integration for WooCommerce with stability and reliability improvements. Including the following new tracking features:
